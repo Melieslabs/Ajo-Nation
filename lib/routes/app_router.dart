@@ -1,5 +1,7 @@
+import 'package:ajo_nation/features/groups/screens/timeline_screen.dart';
 import 'package:flutter/material.dart';
 
+import '../data/mock_data_repository.dart';
 import '../features/admin/screens/add_manage_members_screen.dart';
 import '../features/admin/screens/admin_group_detail_screen.dart';
 import '../features/admin/screens/create_group_screen.dart';
@@ -14,7 +16,8 @@ import '../features/groups/screens/group_detail_screen.dart';
 import '../features/groups/screens/join_group_screen.dart';
 import '../features/groups/screens/my_contributions_screen.dart';
 import '../features/groups/screens/payment_info_screen.dart';
-import '../features/home/screens/home_screen.dart';
+import '../features/home/screens/admin_home_screen.dart';
+import '../features/home/screens/member_home_screen.dart';
 import '../features/notifications/screens/notifications_screen.dart';
 import '../features/profile/screens/profile_settings_screen.dart';
 import '../features/wallet/screens/wallet_overview_screen.dart';
@@ -33,6 +36,7 @@ class AppRoutes {
   static const myContributions = '/my-contributions';
   static const createGroup = '/create-group';
   static const adminGroupDetail = '/admin-group-detail';
+  static const groupTimeline = '/group-timeline';
   static const manageMembers = '/manage-members';
   static const payoutConfirmation = '/payout-confirmation';
   static const wallet = '/wallet';
@@ -55,10 +59,24 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const OtpVerificationScreen());
       case AppRoutes.kyc:
         return MaterialPageRoute(builder: (_) => const KycSetupScreen());
+
       case AppRoutes.home:
-        return MaterialPageRoute(builder: (_) => const HomeScreen());
+        // TEMPORARY branch: reads MockDataRepository.currentAccountType,
+        // which is itself a temporary stand-in (see repo comments). Once
+        // real auth exists, replace this whole case body with a check
+        // against the actual signed-in user's account_type — the branching
+        // logic itself (admin -> AdminHomeScreen, else -> MemberHomeScreen)
+        // stays the same, only the source of truth changes.
+        final isAdmin = MockDataRepository.instance.currentAccountType == 'admin';
+        return MaterialPageRoute(
+          builder: (_) => isAdmin ? const AdminHomeScreen() : const MemberHomeScreen(),
+        );
+
       case AppRoutes.groupDetail:
-        return MaterialPageRoute(builder: (_) => const GroupDetailScreen());
+        final groupId = settings.arguments as String;
+        return MaterialPageRoute(
+          builder: (_) => GroupDetailScreen(groupId: groupId),
+        );
       case AppRoutes.joinGroup:
         return MaterialPageRoute(builder: (_) => const JoinGroupScreen());
       case AppRoutes.paymentInfo:
@@ -68,8 +86,14 @@ class AppRouter {
       case AppRoutes.createGroup:
         return MaterialPageRoute(builder: (_) => const CreateGroupScreen());
       case AppRoutes.adminGroupDetail:
+        final groupId = settings.arguments as String;
         return MaterialPageRoute(
-          builder: (_) => const AdminGroupDetailScreen(),
+          builder: (_) => AdminGroupDetailScreen(groupId: groupId),
+        );
+      case AppRoutes.groupTimeline:
+        final groupId = settings.arguments as String;
+        return MaterialPageRoute(
+          builder: (_) => TimelineScreen(groupId: groupId),
         );
       case AppRoutes.manageMembers:
         return MaterialPageRoute(

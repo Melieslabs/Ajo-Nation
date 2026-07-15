@@ -1,0 +1,557 @@
+import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
+import '../../../routes/app_router.dart';
+import '../../../data/mock_data_repository.dart';
+import '../../../models/group.dart';
+import '../../../theme/app_theme.dart';
+import '../../../theme/theme_controller.dart';
+import '../../../widgets/animated_entry.dart';
+import '../../../widgets/app_bottom_nav.dart';
+
+/// Home shell for account_type = 'member' only. Reached exclusively via the
+/// post-auth router check — no in-app path leads an admin account here, and
+/// no toggle exists to switch into it.
+class MemberHomeScreen extends StatefulWidget {
+  const MemberHomeScreen({super.key});
+
+  @override
+  State<MemberHomeScreen> createState() => _MemberHomeScreenState();
+}
+
+class _MemberHomeScreenState extends State<MemberHomeScreen> {
+  int _currentIndex = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: Listenable.merge([
+        ThemeController.instance,
+        MockDataRepository.instance,
+      ]),
+      builder: (context, _) {
+        return Scaffold(
+          appBar: PreferredSize(
+            preferredSize: const Size.fromHeight(0),
+            child: AppBar(backgroundColor: AppTheme.background, elevation: 0),
+          ),
+          body: IndexedStack(
+            index: _currentIndex,
+            children: [
+              _buildDashboard(),
+              _buildGroups(),
+              _buildWallet(),
+              _buildNotifications(),
+              _buildProfile(),
+            ],
+          ),
+          bottomNavigationBar: AppBottomNav(
+            currentIndex: _currentIndex,
+            onTap: (i) => setState(() => _currentIndex = i),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDashboard() {
+    final repo = MockDataRepository.instance;
+    final joinedGroups = repo.joinedGroups;
+    final myId = repo.currentMemberId;
+
+    num contributed = 0;
+    num upcoming = 0;
+    for (final g in joinedGroups) {
+      final m = g.membershipFor(myId);
+      if (m == null) continue;
+      contributed += m.contributionsPaidThisCycle * g.contributionAmount;
+      if (m.currentCycleStatus != ContributionStatus.paid) {
+        upcoming += g.contributionAmount;
+      }
+    }
+
+    // No cycle-scheduling exists yet (deferred per project notes), so instead
+    // of fabricating a payout date/countdown, the hero card shows real
+    // progress toward payout eligibility for the member's first group.
+    final heroGroup = joinedGroups.isNotEmpty ? joinedGroups.first : null;
+    final heroMembership = heroGroup?.membershipFor(myId);
+
+    return SafeArea(
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppTheme.spacing20, AppTheme.spacing20, AppTheme.spacing20, AppTheme.spacing24,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Home',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontSize: 34, fontWeight: FontWeight.w900, letterSpacing: -0.5,
+                      )),
+              const SizedBox(height: AppTheme.spacing24),
+
+              if (heroGroup != null && heroMembership != null)
+                AnimatedEntry(
+                  delay: const Duration(milliseconds: 50),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(AppTheme.spacing24),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primary,
+                      borderRadius: BorderRadius.circular(AppTheme.radius24),
+                      boxShadow: AppTheme.cardShadow,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('${heroGroup.name} · payout progress',
+                            style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.white70, fontSize: 13)),
+                        const SizedBox(height: AppTheme.spacing12),
+                        Text(
+                          '${heroMembership.contributionsPaidThisCycle}/${heroGroup.paymentsRequiredForEligibility}',
+                          style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                                fontSize: 48, fontWeight: FontWeight.w900, color: Colors.white, height: 1.0,
+                              ),
+                        ),
+                        const SizedBox(height: AppTheme.spacing8),
+                        Text(
+                          heroGroup.isEligibleForPayout(myId)
+                              ? 'Eligible for payout'
+                              : 'payments to become eligible',
+                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.white70, fontWeight: FontWeight.w400),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              const SizedBox(height: AppTheme.spacing24),
+
+              AnimatedEntry(
+                delay: const Duration(milliseconds: 100),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _statBox(
+                        icon: FontAwesomeIcons.handHoldingDollar,
+                        title: 'Contributed',
+                        value: '₦$contributed',
+                        bgColor: AppTheme.pasteGreen,
+                        iconColor: AppTheme.primary,
+                      ),
+                    ),
+                    const SizedBox(width: AppTheme.spacing12),
+                    Expanded(
+                      child: _statBox(
+                        icon: FontAwesomeIcons.calendarDays,
+                        title: 'Upcoming',
+                        value: '₦$upcoming',
+                        bgColor: AppTheme.pastelOrange,
+                        iconColor: AppTheme.warning,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppTheme.spacing24),
+
+              Text('Your groups',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700, fontSize: 16)),
+              const SizedBox(height: AppTheme.spacing16),
+              if (joinedGroups.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: AppTheme.spacing24),
+                  child: Center(
+                    child: Text('No groups yet — join one with an invite code',
+                        style: TextStyle(color: AppTheme.muted, fontSize: 13)),
+                  ),
+                )
+              else
+                for (var i = 0; i < joinedGroups.length; i++) ...[
+                  AnimatedEntry(
+                    delay: Duration(milliseconds: 150 + (i * 50)),
+                    child: _groupCardFor(joinedGroups[i]),
+                  ),
+                  const SizedBox(height: AppTheme.spacing12),
+                ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGroups() {
+    final joinedGroups = MockDataRepository.instance.joinedGroups;
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppTheme.spacing20, AppTheme.spacing20, AppTheme.spacing20, AppTheme.spacing24,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Groups',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          fontSize: 34, fontWeight: FontWeight.w900, letterSpacing: -0.5,
+                        )),
+                GestureDetector(
+                  onTap: () => Navigator.of(context).pushNamed(AppRoutes.joinGroup),
+                  child: Container(
+                    padding: const EdgeInsets.all(AppTheme.spacing12),
+                    decoration: BoxDecoration(color: AppTheme.primary, borderRadius: BorderRadius.circular(AppTheme.radius16)),
+                    child: const FaIcon(FontAwesomeIcons.userPlus, size: 16, color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppTheme.spacing24),
+            Expanded(
+              child: joinedGroups.isEmpty
+                  ? Center(
+                      child: Text('No groups yet — join one with an invite code',
+                          style: TextStyle(color: AppTheme.muted, fontSize: 13)),
+                    )
+                  : ListView(
+                      children: [
+                        for (final group in joinedGroups) ...[
+                          _groupCardFor(group),
+                          const SizedBox(height: AppTheme.spacing12),
+                        ],
+                      ],
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _groupCardFor(Group group) {
+    final myId = MockDataRepository.instance.currentMemberId;
+    final myStatus = group.membershipFor(myId)?.currentCycleStatus;
+
+    return GestureDetector(
+      onTap: () => Navigator.of(context).pushNamed(AppRoutes.groupDetail, arguments: group.id),
+      child: Container(
+        padding: const EdgeInsets.all(AppTheme.spacing16),
+        decoration: BoxDecoration(
+          color: AppTheme.surface,
+          borderRadius: BorderRadius.circular(AppTheme.radius16),
+          boxShadow: AppTheme.cardShadow,
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(group.name, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: AppTheme.textPrimary)),
+                  const SizedBox(height: AppTheme.spacing8),
+                  Text('₦${group.contributionAmount} • ${group.frequency.label}',
+                      style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+                  const SizedBox(height: AppTheme.spacing4),
+                  Text(
+                    myStatus == ContributionStatus.paid ? 'You\'re paid up' : 'Payment due',
+                    style: TextStyle(
+                      color: myStatus == ContributionStatus.paid ? AppTheme.primary : AppTheme.warning,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            GestureDetector(
+              onTap: () => Navigator.of(context).pushNamed(AppRoutes.groupTimeline, arguments: group.id),
+              child: Container(
+                padding: const EdgeInsets.all(AppTheme.spacing8),
+                decoration: BoxDecoration(color: AppTheme.pasteGreen, borderRadius: BorderRadius.circular(AppTheme.radius12)),
+                child: FaIcon(FontAwesomeIcons.clockRotateLeft, size: 14, color: AppTheme.primary),
+              ),
+            ),
+            const SizedBox(width: AppTheme.spacing8),
+            FaIcon(FontAwesomeIcons.chevronRight, color: AppTheme.textSecondary, size: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWallet() {
+    final repo = MockDataRepository.instance;
+    final myId = repo.currentMemberId;
+    num totalSaved = 0;
+    for (final g in repo.joinedGroups) {
+      final m = g.membershipFor(myId);
+      if (m != null) totalSaved += m.contributionsPaidThisCycle * g.contributionAmount;
+    }
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(AppTheme.spacing20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Wallet',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontSize: 34, fontWeight: FontWeight.w900, letterSpacing: -0.5,
+                    )),
+            const SizedBox(height: AppTheme.spacing24),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(AppTheme.spacing24),
+              decoration: BoxDecoration(
+                color: AppTheme.primary,
+                borderRadius: BorderRadius.circular(AppTheme.radius24),
+                boxShadow: AppTheme.cardShadow,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Total saved this cycle',
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.white70, fontSize: 13)),
+                  const SizedBox(height: AppTheme.spacing12),
+                  Text('₦$totalSaved',
+                      style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                            fontSize: 48, fontWeight: FontWeight.w900, color: Colors.white, height: 1.0,
+                          )),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNotifications() {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(AppTheme.spacing20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Alerts',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontSize: 34, fontWeight: FontWeight.w900, letterSpacing: -0.5,
+                    )),
+            const SizedBox(height: AppTheme.spacing24),
+            Expanded(
+              child: ListView(
+                children: [
+                  _notificationCard(
+                    icon: FontAwesomeIcons.bell,
+                    title: 'Payment reminder',
+                    subtitle: 'Your contribution for Community Ajo is due tomorrow',
+                    read: false,
+                  ),
+                  const SizedBox(height: AppTheme.spacing12),
+                  _notificationCard(
+                    icon: FontAwesomeIcons.circleCheck,
+                    title: 'Payout alert',
+                    subtitle: 'A payout was processed for Friend Circle',
+                    read: true,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfile() {
+    return SafeArea(
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(AppTheme.spacing20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Profile',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontSize: 34, fontWeight: FontWeight.w900, letterSpacing: -0.5,
+                      )),
+              const SizedBox(height: AppTheme.spacing24),
+              Container(
+                padding: const EdgeInsets.all(AppTheme.spacing20),
+                decoration: BoxDecoration(
+                  color: AppTheme.surface,
+                  borderRadius: BorderRadius.circular(AppTheme.radius20),
+                  boxShadow: AppTheme.cardShadow,
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 56, height: 56,
+                      decoration: BoxDecoration(color: AppTheme.primary, borderRadius: BorderRadius.circular(AppTheme.radius20)),
+                      child: const Center(
+                        child: Text('CJ', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18)),
+                      ),
+                    ),
+                    const SizedBox(width: AppTheme.spacing16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Chidi Jones',
+                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700, fontSize: 16)),
+                          const SizedBox(height: AppTheme.spacing4),
+                          // Fixed label — account_type is permanent, no switch exists.
+                          Text('Member account',
+                              style: Theme.of(context).textTheme.labelLarge?.copyWith(color: AppTheme.textSecondary, fontSize: 12)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppTheme.spacing24),
+              Text('Settings',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700, fontSize: 16)),
+              const SizedBox(height: AppTheme.spacing16),
+              _menuItem(icon: FontAwesomeIcons.penToSquare, title: 'Edit profile', onTap: () {}),
+              const SizedBox(height: AppTheme.spacing12),
+              _themeToggle(context),
+              const SizedBox(height: AppTheme.spacing12),
+              _menuItem(
+                icon: FontAwesomeIcons.rightFromBracket,
+                title: 'Logout',
+                isDestructive: true,
+                onTap: () => Navigator.of(context).pushNamedAndRemoveUntil(AppRoutes.splash, (r) => false),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ---- shared local helpers ----
+
+  Widget _statBox({
+    required FaIconData icon,
+    required String title,
+    required String value,
+    required Color bgColor,
+    required Color iconColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(AppTheme.spacing16),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(AppTheme.radius20),
+        boxShadow: AppTheme.cardShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 40, height: 40,
+            decoration: BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(AppTheme.radius12)),
+            child: Center(child: FaIcon(icon, size: 18, color: iconColor)),
+          ),
+          const SizedBox(height: AppTheme.spacing12),
+          Text(title, style: TextStyle(color: AppTheme.textSecondary, fontSize: 12, fontWeight: FontWeight.w500)),
+          const SizedBox(height: AppTheme.spacing8),
+          Text(value, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: AppTheme.textPrimary)),
+        ],
+      ),
+    );
+  }
+
+  Widget _notificationCard({
+    required FaIconData icon,
+    required String title,
+    required String subtitle,
+    required bool read,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(AppTheme.spacing16),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(AppTheme.radius16),
+        boxShadow: AppTheme.cardShadow,
+        border: read ? null : Border.all(color: AppTheme.primary, width: 1.5),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 40, height: 40,
+            decoration: BoxDecoration(
+              color: read ? AppTheme.background : AppTheme.pasteGreen,
+              borderRadius: BorderRadius.circular(AppTheme.radius12),
+            ),
+            child: Center(child: FaIcon(icon, size: 18, color: read ? AppTheme.textSecondary : AppTheme.primary)),
+          ),
+          const SizedBox(width: AppTheme.spacing12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: AppTheme.textPrimary)),
+                const SizedBox(height: AppTheme.spacing4),
+                Text(subtitle, style: TextStyle(color: AppTheme.textSecondary, fontSize: 13), maxLines: 2, overflow: TextOverflow.ellipsis),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _menuItem({
+    required FaIconData icon,
+    required String title,
+    required VoidCallback onTap,
+    bool isDestructive = false,
+  }) {
+    final textColor = isDestructive ? AppTheme.danger : AppTheme.textPrimary;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(AppTheme.spacing16),
+        decoration: BoxDecoration(
+          color: isDestructive ? const Color.fromRGBO(220, 38, 38, 0.1) : AppTheme.surface,
+          borderRadius: BorderRadius.circular(AppTheme.radius16),
+          boxShadow: AppTheme.cardShadow,
+        ),
+        child: Row(
+          children: [
+            FaIcon(icon, size: 18, color: textColor),
+            const SizedBox(width: AppTheme.spacing16),
+            Expanded(child: Text(title, style: TextStyle(fontWeight: FontWeight.w600, color: textColor, fontSize: 15))),
+            FaIcon(FontAwesomeIcons.chevronRight, color: AppTheme.textSecondary, size: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _themeToggle(BuildContext context) {
+    final isDark = ThemeController.instance.isDark;
+    return Container(
+      padding: const EdgeInsets.all(AppTheme.spacing16),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(AppTheme.radius16),
+        boxShadow: AppTheme.cardShadow,
+      ),
+      child: Row(
+        children: [
+          FaIcon(isDark ? FontAwesomeIcons.moon : FontAwesomeIcons.sun, size: 18, color: AppTheme.textPrimary),
+          const SizedBox(width: AppTheme.spacing16),
+          Expanded(child: Text(isDark ? 'Dark mode' : 'Light mode', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: AppTheme.textPrimary))),
+          Switch(value: isDark, activeColor: AppTheme.primary, onChanged: (_) => ThemeController.instance.toggle()),
+        ],
+      ),
+    );
+  }
+}
