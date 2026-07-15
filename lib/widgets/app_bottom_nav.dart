@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../theme/app_theme.dart';
 
@@ -12,12 +13,32 @@ class AppBottomNav extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
 
-  static const _items = [
-    _BottomNavItem(label: 'Home', icon: Icons.home),
-    _BottomNavItem(label: 'Groups', icon: Icons.people),
-    _BottomNavItem(label: 'Wallet', icon: Icons.account_balance_wallet),
-    _BottomNavItem(label: 'Alerts', icon: Icons.notifications),
-    _BottomNavItem(label: 'Profile', icon: Icons.person),
+  final List<_BottomNavItem> _items = const [
+    _BottomNavItem(
+      label: 'Home',
+      icon: FontAwesomeIcons.house,
+      activeIcon: FontAwesomeIcons.houseChimney,
+    ),
+    _BottomNavItem(
+      label: 'Groups',
+      icon: FontAwesomeIcons.users,
+      activeIcon: FontAwesomeIcons.usersLine,
+    ),
+    _BottomNavItem(
+      label: 'Wallet',
+      icon: FontAwesomeIcons.wallet,
+      activeIcon: FontAwesomeIcons.wallet,
+    ),
+    _BottomNavItem(
+      label: 'Alerts',
+      icon: FontAwesomeIcons.bell,
+      activeIcon: FontAwesomeIcons.bell,
+    ),
+    _BottomNavItem(
+      label: 'Profile',
+      icon: FontAwesomeIcons.user,
+      activeIcon: FontAwesomeIcons.userCheck,
+    ),
   ];
 
   @override
@@ -27,7 +48,10 @@ class AppBottomNav extends StatelessWidget {
         color: AppTheme.surface,
         boxShadow: AppTheme.cardShadow,
       ),
-      padding: const EdgeInsets.symmetric(vertical: AppTheme.spacing12),
+      padding: const EdgeInsets.symmetric(
+        vertical: AppTheme.spacing12,
+        horizontal: AppTheme.spacing8,
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: List.generate(_items.length, (index) {
@@ -37,15 +61,34 @@ class AppBottomNav extends StatelessWidget {
             onTap: () => onTap(index),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 250),
-              padding: const EdgeInsets.all(AppTheme.spacing10),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppTheme.spacing12,
+                vertical: AppTheme.spacing8,
+              ),
               decoration: BoxDecoration(
                 color: selected ? AppTheme.primarySoft : Colors.transparent,
                 borderRadius: BorderRadius.circular(AppTheme.radius24),
               ),
-              child: Icon(
-                item.icon,
-                size: 22,
-                color: selected ? AppTheme.primary : AppTheme.textSecondary,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  FaIcon(
+                    selected ? item.activeIcon : item.icon,
+                    size: 18,
+                    color: selected ? AppTheme.primary : AppTheme.textSecondary,
+                  ),
+                  if (selected) ...[
+                    const SizedBox(width: AppTheme.spacing8),
+                    Text(
+                      item.label,
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                            color: AppTheme.primary,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12,
+                          ),
+                    ),
+                  ],
+                ],
               ),
             ),
           );
@@ -56,7 +99,13 @@ class AppBottomNav extends StatelessWidget {
 }
 
 class _BottomNavItem {
-  const _BottomNavItem({required this.label, required this.icon});
+  const _BottomNavItem({
+    required this.label,
+    required this.icon,
+    required this.activeIcon,
+  });
+
   final String label;
-  final IconData icon;
+  final FaIconData icon;
+  final FaIconData activeIcon;
 }

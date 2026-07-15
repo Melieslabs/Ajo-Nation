@@ -4,13 +4,20 @@ class AppTheme {
   static const Color primary = Color(0xFF0F9D58);
   static const Color primarySoft = Color(0xFFE8F5E9);
   static const Color accent = Color(0xFFE8F5E9);
-  static const Color background = Color(0xFFF7F9F8);
+  static const Color background = Color(0xFFF5F5F7); // Light gray background
   static const Color surface = Color(0xFFFFFFFF);
   static const Color muted = Color(0xFF8A8F98);
   static const Color textPrimary = Color(0xFF1A1A1A);
   static const Color textSecondary = Color(0xFF6B7280);
   static const Color danger = Color(0xFFDC2626);
   static const Color warning = Color(0xFFF59E0B);
+  static const Color info = Color(0xFF2196F3);
+
+  // Pastel tint backgrounds for icon chips
+  static const Color pasteGreen = Color(0xFFE8F5E9);
+  static const Color pastelBlue = Color(0xFFE3F2FD);
+  static const Color pastelOrange = Color(0xFFFFE0B2);
+  static const Color pastelPurple = Color(0xFFF3E5F5);
 
   static const double spacing8 = 8;
   static const double spacing10 = 10;
@@ -21,16 +28,30 @@ class AppTheme {
   static const double spacing24 = 24;
   static const double spacing32 = 32;
 
+  // Helper for smaller spacing
+  static const double spacing4 = 4;
+
   static const double radius12 = 12;
   static const double radius16 = 16;
   static const double radius20 = 20;
   static const double radius24 = 24;
 
+  // Soft, diffused shadow for cards
   static List<BoxShadow> cardShadow = const [
     BoxShadow(
-      color: Color.fromRGBO(0, 0, 0, 0.04),
-      blurRadius: 20,
+      color: Color.fromRGBO(0, 0, 0, 0.05),
+      blurRadius: 24,
       offset: Offset(0, 4),
+      spreadRadius: 0,
+    ),
+  ];
+
+  // Minimal shadow
+  static List<BoxShadow> thinShadow = const [
+    BoxShadow(
+      color: Color.fromRGBO(0, 0, 0, 0.03),
+      blurRadius: 12,
+      offset: Offset(0, 2),
     ),
   ];
 
