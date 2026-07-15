@@ -3,6 +3,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../../../routes/app_router.dart';
 import '../../../theme/app_theme.dart';
+import '../../../theme/theme_controller.dart';
 import '../../../widgets/animated_entry.dart';
 import '../../../widgets/app_bottom_nav.dart';
 import '../../../widgets/primary_button.dart';
@@ -16,32 +17,44 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
+
+  // FIX #6: local default_view state for the Profile toggle.
+  // Swap this for a real preference (Supabase/shared_prefs) once auth is wired.
   bool _isAdminView = true;
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(0),
-        child: AppBar(
-          backgroundColor: AppTheme.background,
-          elevation: 0,
-        ),
-      ),
-      body: IndexedStack(
-        index: _currentIndex,
-        children: [
-          _buildHomeContent(),
-          _buildGroupsContent(),
-          _buildWalletContent(),
-          _buildNotificationsContent(),
-          _buildProfileContent(),
-        ],
-      ),
-      bottomNavigationBar: AppBottomNav(
-        currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
-      ),
+    // ListenableBuilder rebuilds this whole screen whenever ThemeController
+    // fires notifyListeners() (i.e. on toggle). This is necessary because
+    // AppTheme.* colors are plain getters, not read through Theme.of(context)
+    // — so nothing here is otherwise linked to theme changes at all.
+    return ListenableBuilder(
+      listenable: ThemeController.instance,
+      builder: (context, _) {
+        return Scaffold(
+          appBar: PreferredSize(
+            preferredSize: const Size.fromHeight(0),
+            child: AppBar(
+              backgroundColor: AppTheme.background,
+              elevation: 0,
+            ),
+          ),
+          body: IndexedStack(
+            index: _currentIndex,
+            children: [
+              _buildHomeContent(),
+              _buildGroupsContent(),
+              _buildWalletContent(),
+              _buildNotificationsContent(),
+              _buildProfileContent(),
+            ],
+          ),
+          bottomNavigationBar: AppBottomNav(
+            currentIndex: _currentIndex,
+            onTap: (index) => setState(() => _currentIndex = index),
+          ),
+        );
+      },
     );
   }
 
@@ -825,6 +838,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 onTap: () {},
               ),
               const SizedBox(height: AppTheme.spacing12),
+
+              // FIX #6: the requested default_view toggle was missing entirely.
+              // Local state only for now — wire to a real user preference
+              // (Supabase profile row / shared_prefs) once auth/backend lands.
               _profileMenuItem(
                 context,
                 icon: _isAdminView
@@ -837,12 +854,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: AppTheme.spacing12),
 
-              _profileMenuItem(
-                context,
-                icon: FontAwesomeIcons.sun,
-                title: 'Theme',
-                onTap: () {},
-              ),
+              _buildThemeToggle(context),
               const SizedBox(height: AppTheme.spacing12),
 
               _profileMenuItem(
@@ -858,6 +870,51 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  /// Dark mode toggle row — same visual shell as _profileMenuItem, but with
+  /// a functional Switch instead of a chevron, since this is a direct
+  /// action rather than navigation to another screen.
+  Widget _buildThemeToggle(BuildContext context) {
+    final isDark = ThemeController.instance.isDark;
+
+    return Container(
+      padding: const EdgeInsets.all(AppTheme.spacing16),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(AppTheme.radius16),
+        boxShadow: AppTheme.cardShadow,
+      ),
+      child: Row(
+        children: [
+          FaIcon(
+            isDark ? FontAwesomeIcons.moon : FontAwesomeIcons.sun,
+            size: 18,
+            color: AppTheme.textPrimary,
+          ),
+          const SizedBox(width: AppTheme.spacing16),
+          Expanded(
+            child: Text(
+              isDark ? 'Dark mode' : 'Light mode',
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                  ),
+            ),
+          ),
+          Switch(
+            value: isDark,
+            activeColor: AppTheme.primary,
+            onChanged: (_) {
+              // No local setState needed here — ThemeController.toggle()
+              // calls notifyListeners(), and the ListenableBuilder wrapping
+              // the Scaffold in build() picks that up and rebuilds.
+              ThemeController.instance.toggle();
+            },
+          ),
+        ],
       ),
     );
   }
@@ -901,6 +958,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
               ),
             ),
+            // FIX #4: was Icons.chevron_right (Material) — now FontAwesome.
             FaIcon(
               FontAwesomeIcons.chevronRight,
               color: AppTheme.textSecondary,
