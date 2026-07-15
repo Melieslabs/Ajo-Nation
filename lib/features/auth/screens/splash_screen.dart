@@ -22,7 +22,7 @@ class SplashScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(AppTheme.radius16),
               ),
               child: const Icon(
-                Icons.account_balance,
+                Icons.savings_outlined,
                 size: 64,
                 color: AppTheme.primary,
               ),

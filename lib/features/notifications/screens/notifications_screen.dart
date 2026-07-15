@@ -38,7 +38,7 @@ class NotificationsScreen extends StatelessWidget {
     return Card(
       child: ListTile(
         leading: Icon(
-          unread ? Icons.circle : Icons.check_circle_outline,
+          unread ? Icons.circle : Icons.check_circle,
           color: unread ? AppTheme.primary : AppTheme.textSecondary,
         ),
         title: Text(title),

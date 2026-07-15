@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
 
-class PrimaryButton extends StatelessWidget {
+class PrimaryButton extends StatefulWidget {
   const PrimaryButton({
     super.key,
     required this.label,
@@ -13,19 +13,41 @@ class PrimaryButton extends StatelessWidget {
   final VoidCallback onPressed;
 
   @override
+  State<PrimaryButton> createState() => _PrimaryButtonState();
+}
+
+class _PrimaryButtonState extends State<PrimaryButton> {
+  bool _pressed = false;
+
+  @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: FilledButton(
-        style: FilledButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: AppTheme.spacing12),
-          backgroundColor: AppTheme.primary,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppTheme.radius12),
+    return AnimatedScale(
+      duration: const Duration(milliseconds: 120),
+      scale: _pressed ? 0.97 : 1.0,
+      child: SizedBox(
+        width: double.infinity,
+        child: GestureDetector(
+          onTapDown: (_) => setState(() => _pressed = true),
+          onTapUp: (_) => setState(() => _pressed = false),
+          onTapCancel: () => setState(() => _pressed = false),
+          onTap: widget.onPressed,
+          child: Container(
+            decoration: BoxDecoration(
+              color: AppTheme.primary,
+              borderRadius: BorderRadius.circular(AppTheme.radius20),
+              boxShadow: AppTheme.cardShadow,
+            ),
+            padding: const EdgeInsets.symmetric(vertical: AppTheme.spacing16),
+            alignment: Alignment.center,
+            child: Text(
+              widget.label,
+              style: const TextStyle(
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
+            ),
           ),
         ),
-        onPressed: onPressed,
-        child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
       ),
     );
   }

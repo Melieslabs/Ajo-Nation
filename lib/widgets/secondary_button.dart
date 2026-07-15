@@ -18,14 +18,21 @@ class SecondaryButton extends StatelessWidget {
       width: double.infinity,
       child: OutlinedButton(
         style: OutlinedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: AppTheme.spacing12),
+          padding: const EdgeInsets.symmetric(vertical: AppTheme.spacing16),
           side: const BorderSide(color: AppTheme.primary),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppTheme.radius12),
+            borderRadius: BorderRadius.circular(AppTheme.radius20),
           ),
         ),
         onPressed: onPressed,
-        child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+        child: Text(
+          label,
+          style: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: AppTheme.textPrimary,
+          ),
+        ),
       ),
     );
   }

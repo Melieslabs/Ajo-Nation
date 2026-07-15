@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../../routes/app_router.dart';
 import '../../../theme/app_theme.dart';
+import '../../../widgets/animated_entry.dart';
 import '../../../widgets/primary_button.dart';
 import '../../../widgets/secondary_button.dart';
+import '../../../widgets/fintech_card.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -33,7 +35,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       title: 'Secure and simple',
       description:
           'From signup to KYC, every step is designed to feel calm and clear.',
-      icon: Icons.verified_user,
+      icon: Icons.security,
     ),
   ];
 
@@ -41,18 +43,32 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        actions: [TextButton(onPressed: _skip, child: const Text('Skip'))],
+        backgroundColor: AppTheme.surface,
+        title: Text('Ajo Hub', style: Theme.of(context).textTheme.titleLarge),
+        actions: [
+          TextButton(
+            onPressed: _skip,
+            child: const Text(
+              'Skip',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(AppTheme.spacing24),
         child: Column(
           children: [
             Expanded(
-              child: PageView.builder(
-                controller: _controller,
-                onPageChanged: (index) => setState(() => _currentPage = index),
-                itemCount: _pages.length,
-                itemBuilder: (_, index) => _buildSlide(_pages[index]),
+              child: AnimatedEntry(
+                delay: const Duration(milliseconds: 50),
+                child: PageView.builder(
+                  controller: _controller,
+                  onPageChanged: (index) =>
+                      setState(() => _currentPage = index),
+                  itemCount: _pages.length,
+                  itemBuilder: (_, index) => _buildSlide(_pages[index]),
+                ),
               ),
             ),
             const SizedBox(height: AppTheme.spacing24),
@@ -95,25 +111,37 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Container(
-          padding: const EdgeInsets.all(AppTheme.spacing24),
-          decoration: BoxDecoration(
-            color: AppTheme.accent,
-            borderRadius: BorderRadius.circular(AppTheme.radius16),
+        FintechCard(
+          child: Padding(
+            padding: const EdgeInsets.all(AppTheme.spacing24),
+            child: Column(
+              children: [
+                Container(
+                  width: 104,
+                  height: 104,
+                  decoration: BoxDecoration(
+                    color: AppTheme.primarySoft,
+                    borderRadius: BorderRadius.circular(AppTheme.radius24),
+                  ),
+                  child: Center(
+                    child: Icon(page.icon, size: 48, color: AppTheme.primary),
+                  ),
+                ),
+                const SizedBox(height: AppTheme.spacing24),
+                Text(
+                  page.title,
+                  style: Theme.of(context).textTheme.headlineSmall,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: AppTheme.spacing12),
+                Text(
+                  page.description,
+                  style: Theme.of(context).textTheme.bodyLarge,
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
           ),
-          child: Icon(page.icon, size: 54, color: AppTheme.primary),
-        ),
-        const SizedBox(height: AppTheme.spacing24),
-        Text(
-          page.title,
-          style: Theme.of(context).textTheme.headlineSmall,
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: AppTheme.spacing12),
-        Text(
-          page.description,
-          style: Theme.of(context).textTheme.bodyMedium,
-          textAlign: TextAlign.center,
         ),
       ],
     );

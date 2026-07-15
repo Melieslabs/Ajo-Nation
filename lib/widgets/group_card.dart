@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
+import 'fintech_card.dart';
 
 class GroupCard extends StatelessWidget {
   const GroupCard({
@@ -22,52 +23,59 @@ class GroupCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppTheme.radius16),
-        child: Padding(
-          padding: const EdgeInsets.all(AppTheme.spacing16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      name,
-                      style: Theme.of(context).textTheme.titleMedium,
+    return FintechCard(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppTheme.radius24),
+          child: Padding(
+            padding: const EdgeInsets.all(AppTheme.spacing20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        name,
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
                     ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppTheme.spacing14,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primarySoft,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        position,
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          color: AppTheme.primary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppTheme.spacing16),
+                Text(
+                  amount,
+                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                    fontSize: 32,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.textPrimary,
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppTheme.spacing12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppTheme.accent,
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      position,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppTheme.spacing12),
-              Text(
-                amount,
-                style: Theme.of(
-                  context,
-                ).textTheme.headlineSmall?.copyWith(color: AppTheme.primary),
-              ),
-              const SizedBox(height: AppTheme.spacing8),
-              Text(
-                '$frequency • Next payout $nextPayout',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-            ],
+                ),
+                const SizedBox(height: AppTheme.spacing12),
+                Text(
+                  '$frequency • Next payout $nextPayout',
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
+              ],
+            ),
           ),
         ),
       ),

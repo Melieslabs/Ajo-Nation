@@ -37,8 +37,8 @@ class GroupDetailScreen extends StatelessWidget {
                     Text(
                       '₦20,000',
                       style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                        color: AppTheme.primary,
-                      ),
+                            color: AppTheme.primary,
+                          ),
                     ),
                   ],
                 ),
@@ -53,10 +53,8 @@ class GroupDetailScreen extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      const Icon(
-                        Icons.circle_outlined,
-                        color: AppTheme.primary,
-                      ),
+                      const Icon(Icons.circle_outlined,
+                          color: AppTheme.primary),
                       const SizedBox(width: AppTheme.spacing8),
                       Text(
                         'Cycle progress',

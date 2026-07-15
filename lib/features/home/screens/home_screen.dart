@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../../routes/app_router.dart';
 import '../../../theme/app_theme.dart';
+import '../../../widgets/animated_entry.dart';
 import '../../../widgets/app_bottom_nav.dart';
+import '../../../widgets/fintech_card.dart';
 import '../../../widgets/group_card.dart';
 import '../../../widgets/primary_button.dart';
 
@@ -21,7 +23,10 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isAdmin ? 'Admin dashboard' : 'Welcome back'),
+        title: Text(
+          _isAdmin ? 'Admin dashboard' : 'Welcome back',
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
         actions: [
           IconButton(
             onPressed: () =>
@@ -61,13 +66,26 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: AppTheme.spacing16),
             Row(
               children: [
-                Expanded(child: _statCard('Active groups', '3')),
+                Expanded(
+                  child: AnimatedEntry(
+                    delay: const Duration(milliseconds: 50),
+                    child: _statCard('Active groups', '3', isHero: true),
+                  ),
+                ),
                 const SizedBox(width: AppTheme.spacing12),
-                Expanded(child: _statCard('Members', '48')),
+                Expanded(
+                  child: AnimatedEntry(
+                    delay: const Duration(milliseconds: 100),
+                    child: _statCard('Members', '48'),
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: AppTheme.spacing12),
-            _statCard('Pending payouts', '2'),
+            AnimatedEntry(
+              delay: const Duration(milliseconds: 150),
+              child: _statCard('Pending payouts', '2'),
+            ),
             const SizedBox(height: AppTheme.spacing24),
             Text(
               'Managed groups',
@@ -77,25 +95,32 @@ class _HomeScreenState extends State<HomeScreen> {
             Expanded(
               child: ListView(
                 children: [
-                  GroupCard(
-                    name: 'Ajo Circle',
-                    amount: '₦50,000',
-                    frequency: 'Weekly',
-                    nextPayout: 'Fri, 20 Jul',
-                    position: 'Admin',
-                    onTap: () => Navigator.of(
-                      context,
-                    ).pushNamed(AppRoutes.adminGroupDetail),
+                  AnimatedEntry(
+                    delay: const Duration(milliseconds: 100),
+                    child: GroupCard(
+                      name: 'Ajo Circle',
+                      amount: '₦50,000',
+                      frequency: 'Weekly',
+                      nextPayout: 'Fri, 20 Jul',
+                      position: 'Admin',
+                      onTap: () => Navigator.of(
+                        context,
+                      ).pushNamed(AppRoutes.adminGroupDetail),
+                    ),
                   ),
-                  GroupCard(
-                    name: 'Merry Savings',
-                    amount: '₦30,000',
-                    frequency: 'Biweekly',
-                    nextPayout: 'Mon, 29 Jul',
-                    position: 'Admin',
-                    onTap: () => Navigator.of(
-                      context,
-                    ).pushNamed(AppRoutes.adminGroupDetail),
+                  const SizedBox(height: AppTheme.spacing16),
+                  AnimatedEntry(
+                    delay: const Duration(milliseconds: 150),
+                    child: GroupCard(
+                      name: 'Merry Savings',
+                      amount: '₦30,000',
+                      frequency: 'Biweekly',
+                      nextPayout: 'Mon, 29 Jul',
+                      position: 'Admin',
+                      onTap: () => Navigator.of(
+                        context,
+                      ).pushNamed(AppRoutes.adminGroupDetail),
+                    ),
                   ),
                 ],
               ),
@@ -200,12 +225,18 @@ class _HomeScreenState extends State<HomeScreen> {
           ListTile(
             contentPadding: EdgeInsets.zero,
             title: const Text('Upcoming obligations'),
-            trailing: const Text('₦50,000'),
+            trailing: Text(
+              '₦50,000',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
           ),
           ListTile(
             contentPadding: EdgeInsets.zero,
             title: const Text('Next payout date'),
-            trailing: const Text('20 Jul'),
+            trailing: Text(
+              '20 Jul',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
           ),
           const SizedBox(height: AppTheme.spacing16),
           PrimaryButton(
@@ -228,17 +259,25 @@ class _HomeScreenState extends State<HomeScreen> {
             style: Theme.of(context).textTheme.headlineSmall,
           ),
           const SizedBox(height: AppTheme.spacing16),
-          const ListTile(
-            title: Text('Payment reminder'),
-            subtitle: Text(
+          ListTile(
+            title: const Text('Payment reminder'),
+            subtitle: const Text(
               'Your contribution for Community Ajo is due tomorrow',
             ),
-            trailing: Icon(Icons.circle, color: AppTheme.primary, size: 12),
+            trailing: Icon(
+              Icons.circle,
+              color: AppTheme.primary,
+              size: 12,
+            ),
           ),
-          const ListTile(
-            title: Text('Payout alert'),
-            subtitle: Text('A payout was processed for Ajo Circle'),
-            trailing: Icon(Icons.circle, color: AppTheme.primary, size: 12),
+          ListTile(
+            title: const Text('Payout alert'),
+            subtitle: const Text('A payout was processed for Ajo Circle'),
+            trailing: Icon(
+              Icons.circle,
+              color: AppTheme.primary,
+              size: 12,
+            ),
           ),
         ],
       ),
@@ -280,28 +319,30 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _statCard(String title, String value) {
-    return Container(
-      padding: const EdgeInsets.all(AppTheme.spacing16),
-      decoration: BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(AppTheme.radius16),
-        boxShadow: [
-          BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 2)),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: Theme.of(context).textTheme.bodyMedium),
-          const SizedBox(height: AppTheme.spacing8),
-          Text(
-            value,
-            style: Theme.of(
-              context,
-            ).textTheme.headlineSmall?.copyWith(color: AppTheme.primary),
-          ),
-        ],
+  Widget _statCard(String title, String value, {bool isHero = false}) {
+    return FintechCard(
+      color: isHero ? AppTheme.primarySoft : AppTheme.surface,
+      child: Padding(
+        padding: const EdgeInsets.all(AppTheme.spacing20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: Theme.of(
+                context,
+              ).textTheme.labelLarge?.copyWith(color: AppTheme.textSecondary),
+            ),
+            const SizedBox(height: AppTheme.spacing12),
+            Text(
+              value,
+              style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                    fontSize: 32,
+                    color: AppTheme.textPrimary,
+                  ),
+            ),
+          ],
+        ),
       ),
     );
   }

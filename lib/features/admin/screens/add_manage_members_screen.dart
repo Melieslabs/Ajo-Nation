@@ -62,7 +62,7 @@ class _AddManageMembersScreenState extends State<AddManageMembersScreen> {
                       trailing: const Icon(Icons.drag_handle),
                     ),
                 ],
-                onReorder: (oldIndex, newIndex) {
+                onReorderItem: (oldIndex, newIndex) {
                   setState(() {
                     if (newIndex > oldIndex) newIndex--;
                     final item = _members.removeAt(oldIndex);
