@@ -6,17 +6,17 @@ class FintechCard extends StatelessWidget {
   const FintechCard({
     super.key,
     required this.child,
-    this.color = AppTheme.surface,
+    this.color,
   });
 
   final Widget child;
-  final Color color;
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: color,
+        color: color ?? AppTheme.surface,
         borderRadius: BorderRadius.circular(AppTheme.radius24),
         boxShadow: AppTheme.cardShadow,
       ),

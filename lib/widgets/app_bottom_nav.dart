@@ -49,7 +49,7 @@ class AppBottomNav extends StatelessWidget {
         boxShadow: AppTheme.cardShadow,
       ),
       padding: const EdgeInsets.symmetric(
-        vertical: AppTheme.spacing12,
+        vertical: AppTheme.spacing24,
         horizontal: AppTheme.spacing8,
       ),
       child: Row(

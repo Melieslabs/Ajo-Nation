@@ -93,7 +93,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         _phoneError,
                         _passwordError,
                       ].whereType<String>().join('\n'),
-                      style: const TextStyle(color: AppTheme.primary),
+                      style: TextStyle(color: AppTheme.primary),
                     ),
                   ),
                 const SizedBox(height: AppTheme.spacing24),

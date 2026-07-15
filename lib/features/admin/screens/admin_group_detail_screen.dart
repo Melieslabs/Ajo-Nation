@@ -49,7 +49,7 @@ class AdminGroupDetailScreen extends StatelessWidget {
             ),
             const SizedBox(height: AppTheme.spacing12),
             const MemberListTile(
-              name: 'Amina Musa',
+              name: 'Emelie Him',
               initials: 'AM',
               status: StatusVariant.paid,
             ),

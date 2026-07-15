@@ -19,7 +19,7 @@ class SecondaryButton extends StatelessWidget {
       child: OutlinedButton(
         style: OutlinedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: AppTheme.spacing16),
-          side: const BorderSide(color: AppTheme.primary),
+          side:  BorderSide(color: AppTheme.primary),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppTheme.radius20),
           ),
@@ -27,7 +27,7 @@ class SecondaryButton extends StatelessWidget {
         onPressed: onPressed,
         child: Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w600,
             color: AppTheme.textPrimary,
