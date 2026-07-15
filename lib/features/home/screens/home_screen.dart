@@ -906,11 +906,8 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           Switch(
             value: isDark,
-            activeColor: AppTheme.primary,
+            activeThumbColor: AppTheme.primary,
             onChanged: (_) {
-              // No local setState needed here — ThemeController.toggle()
-              // calls notifyListeners(), and the ListenableBuilder wrapping
-              // the Scaffold in build() picks that up and rebuilds.
               ThemeController.instance.toggle();
             },
           ),

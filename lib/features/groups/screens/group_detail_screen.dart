@@ -1,3 +1,4 @@
+import 'package:ajo_nation/widgets/my_back_button.dart';
 import 'package:flutter/material.dart';
 
 import '../../../theme/app_theme.dart';
@@ -14,6 +15,7 @@ class GroupDetailScreen extends StatelessWidget {
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
+            leading: MyBackButton(),
             expandedHeight: 220,
             pinned: true,
             flexibleSpace: FlexibleSpaceBar(
@@ -27,7 +29,7 @@ class GroupDetailScreen extends StatelessWidget {
                 ),
                 color: AppTheme.accent,
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Text(
                       'Weekly contribution',

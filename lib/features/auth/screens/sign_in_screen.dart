@@ -61,7 +61,7 @@ class _SignInScreenState extends State<SignInScreen> {
                 const SizedBox(height: AppTheme.spacing12),
                 TextButton(
                   onPressed: () =>
-                      Navigator.of(context).pushNamed(AppRoutes.signUp),
+                      Navigator.pop(context),
                   child: const Text('Create account'),
                 ),
               ],
