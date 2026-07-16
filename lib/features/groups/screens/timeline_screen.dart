@@ -10,10 +10,21 @@ import '../../../widgets/daily_summary_card.dart';
 /// The per-group activity feed — replaces manually posting payment updates
 /// into WhatsApp. Read-only, entirely derived from MockDataRepository's
 /// timeline + group data. Not a chat: no input, no messaging, nothing to type.
-class TimelineScreen extends StatelessWidget {
+class TimelineScreen extends StatefulWidget {
   const TimelineScreen({super.key, required this.groupId});
 
   final String groupId;
+
+  @override
+  State<TimelineScreen> createState() => _TimelineScreenState();
+}
+
+class _TimelineScreenState extends State<TimelineScreen> {
+  @override
+  void initState() {
+    super.initState();
+    MockDataRepository.instance.loadTimeline(widget.groupId);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +35,7 @@ class TimelineScreen extends StatelessWidget {
       ]),
       builder: (context, _) {
         final repo = MockDataRepository.instance;
-        final group = repo.group(groupId);
+        final group = repo.group(widget.groupId);
 
         if (group == null) {
           return Scaffold(
@@ -33,7 +44,7 @@ class TimelineScreen extends StatelessWidget {
           );
         }
 
-        final events = repo.timelineFor(groupId);
+        final events = repo.timelineFor(widget.groupId);
         final groupedEvents = _groupByDay(events);
 
         return Scaffold(

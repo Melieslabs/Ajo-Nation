@@ -8,9 +8,9 @@ import '../../../theme/app_theme.dart';
 
 /// The one place account_type ever gets set. Reached once, during sign-up
 /// — never revisited, never toggled. Writes the permanent `users` row via
-/// AuthService.completeSignup(), then sets MockDataRepository.currentAccountType
-/// (still the mock-data stand-in until group data itself moves to Supabase)
-/// and routes into the matching home shell.
+/// AuthService.completeSignup(), then syncs MockDataRepository (which now
+/// loads real group data from Supabase) and routes into the matching home
+/// shell.
 class RoleSelectionScreen extends StatefulWidget {
   const RoleSelectionScreen({super.key});
 
@@ -33,10 +33,10 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
 
       await AuthService.instance.completeSignup(accountType: accountType);
 
-      // Bridges the real signed-in id AND name into the mock repo now
-      // that auth is real — see syncCurrentUser's docs re: the seed
-      // group disappearing.
-      MockDataRepository.instance.syncCurrentUser(
+      // Bridges the real signed-in id AND name into the repo, then loads
+      // this (brand new) admin/member's groups — empty at this point,
+      // but keeps behavior consistent with sign-in.
+      await MockDataRepository.instance.syncCurrentUser(
         userId: AuthService.instance.currentUserId!,
         accountType: accountType,
         fullName: fullName,

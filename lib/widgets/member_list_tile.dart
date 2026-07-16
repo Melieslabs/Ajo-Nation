@@ -10,17 +10,20 @@ class MemberListTile extends StatelessWidget {
     required this.initials,
     required this.status,
     this.trailing,
+    this.onTap,
   });
 
   final String name;
   final String initials;
   final StatusVariant status;
   final Widget? trailing;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
       contentPadding: EdgeInsets.zero,
+      onTap: onTap,
       leading: CircleAvatar(
         radius: 24,
         backgroundColor: AppTheme.accent,

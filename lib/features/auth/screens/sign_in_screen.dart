@@ -121,7 +121,7 @@ class _SignInScreenState extends State<SignInScreen> {
       // sends them to the correct dashboard, AND Profile shows their
       // real name instead of a placeholder.
       final profile = await AuthService.instance.fetchUserProfile();
-      MockDataRepository.instance.syncCurrentUser(
+      await MockDataRepository.instance.syncCurrentUser(
         userId: AuthService.instance.currentUserId!,
         accountType: profile.accountType,
         fullName: profile.fullName,

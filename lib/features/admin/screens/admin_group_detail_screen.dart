@@ -19,11 +19,18 @@ class AdminGroupDetailScreen extends StatefulWidget {
 
 class _AdminGroupDetailScreenState extends State<AdminGroupDetailScreen> {
   final _repo = MockDataRepository.instance;
+  bool _isRefreshing = true;
 
   @override
   void initState() {
     super.initState();
     _repo.addListener(_onRepoChanged);
+    _refresh();
+  }
+
+  Future<void> _refresh() async {
+    await _repo.refreshGroup(widget.groupId);
+    if (mounted) setState(() => _isRefreshing = false);
   }
 
   @override
@@ -46,6 +53,9 @@ class _AdminGroupDetailScreenState extends State<AdminGroupDetailScreen> {
     final group = _repo.group(widget.groupId);
 
     if (group == null) {
+      if (_isRefreshing) {
+        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      }
       return Scaffold(
         appBar: AppBar(title: const Text('Group not found')),
         body: const Center(child: Text('This group no longer exists.')),
@@ -90,6 +100,12 @@ class _AdminGroupDetailScreenState extends State<AdminGroupDetailScreen> {
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: AppTheme.spacing12),
+            Text(
+              'Tap a pending or late member to simulate their payment '
+              '(stand-in for the Paystack DVA webhook, not built yet).',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.muted),
+            ),
+            const SizedBox(height: AppTheme.spacing12),
             for (final membership in group.memberships)
               MemberListTile(
                 name: _repo.member(membership.memberId)?.name ?? 'Unknown',
@@ -100,6 +116,13 @@ class _AdminGroupDetailScreenState extends State<AdminGroupDetailScreen> {
                     ? const StatusBadge(
                         label: 'Late', variant: StatusVariant.late)
                     : null,
+                onTap: membership.currentCycleStatus == ContributionStatus.paid
+                    ? null
+                    : () => _repo.recordContributionPaid(
+                          group.id,
+                          membership.memberId,
+                          group.contributionAmount,
+                        ),
               ),
             const SizedBox(height: AppTheme.spacing24),
             PrimaryButton(

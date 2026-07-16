@@ -19,11 +19,18 @@ class GroupDetailScreen extends StatefulWidget {
 
 class _GroupDetailScreenState extends State<GroupDetailScreen> {
   final _repo = MockDataRepository.instance;
+  bool _isRefreshing = true;
 
   @override
   void initState() {
     super.initState();
     _repo.addListener(_onRepoChanged);
+    _refresh();
+  }
+
+  Future<void> _refresh() async {
+    await _repo.refreshGroup(widget.groupId);
+    if (mounted) setState(() => _isRefreshing = false);
   }
 
   @override
@@ -46,6 +53,9 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
     final group = _repo.group(widget.groupId);
 
     if (group == null) {
+      if (_isRefreshing) {
+        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      }
       return Scaffold(
         body: Center(child: Text('This group no longer exists.')),
       );

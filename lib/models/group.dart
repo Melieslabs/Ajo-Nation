@@ -67,8 +67,8 @@ class Group {
       .where((m) => m.currentCycleStatus == ContributionStatus.paid)
       .length;
 
-  num get collectedThisCycle =>
-      memberships.fold<num>(0, (sum, m) => sum + m.contributionsPaidThisCycle);
+  num get collectedThisCycle => memberships.fold<num>(
+      0, (sum, m) => sum + (m.contributionsPaidThisCycle * contributionAmount));
 
   num get expectedThisCycle => contributionAmount * totalMembers;
 

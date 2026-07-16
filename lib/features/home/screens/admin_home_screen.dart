@@ -4,14 +4,12 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../../routes/app_router.dart';
 import '../../../data/mock_data_repository.dart';
 import '../../../models/group.dart';
+import '../../../services/auth_service.dart';
 import '../../../theme/app_theme.dart';
 import '../../../theme/theme_controller.dart';
 import '../../../widgets/animated_entry.dart';
 import '../../../widgets/app_bottom_nav.dart';
 
-/// Home shell for account_type = 'admin' only. This screen is reached
-/// exclusively via the post-auth router check — there is no in-app path
-/// that leads a member account here, and no toggle back to it.
 class AdminHomeScreen extends StatefulWidget {
   const AdminHomeScreen({super.key});
 
@@ -58,10 +56,6 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
     final repo = MockDataRepository.instance;
     final managedGroups = repo.managedGroups;
     final totalMembers = managedGroups.fold<int>(0, (sum, g) => sum + g.totalMembers);
-    // "Pending payouts" = groups where at least one member has hit eligibility
-    // this cycle but hasn't been paid out yet. Simplified for now: count
-    // groups where paidCount == totalMembers (cycle fully collected,
-    // awaiting a payout trigger).
     final pendingPayouts = managedGroups.where((g) => g.paidCount == g.totalMembers).length;
 
     return SafeArea(
@@ -386,7 +380,12 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                 icon: FontAwesomeIcons.rightFromBracket,
                 title: 'Logout',
                 isDestructive: true,
-                onTap: () => Navigator.of(context).pushNamedAndRemoveUntil(AppRoutes.splash, (r) => false),
+                onTap: () async {
+                  await AuthService.instance.signOut();
+                  MockDataRepository.instance.resetForLogout();
+                  if (!context.mounted) return;
+                  Navigator.of(context).pushNamedAndRemoveUntil(AppRoutes.splash, (r) => false);
+                },
               ),
             ],
           ),

@@ -4,6 +4,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../../routes/app_router.dart';
 import '../../../data/mock_data_repository.dart';
 import '../../../models/group.dart';
+import '../../../services/auth_service.dart';
 import '../../../theme/app_theme.dart';
 import '../../../theme/theme_controller.dart';
 import '../../../widgets/animated_entry.dart';
@@ -424,7 +425,12 @@ class _MemberHomeScreenState extends State<MemberHomeScreen> {
                 icon: FontAwesomeIcons.rightFromBracket,
                 title: 'Logout',
                 isDestructive: true,
-                onTap: () => Navigator.of(context).pushNamedAndRemoveUntil(AppRoutes.splash, (r) => false),
+                onTap: () async {
+                  await AuthService.instance.signOut();
+                  MockDataRepository.instance.resetForLogout();
+                  if (!context.mounted) return;
+                  Navigator.of(context).pushNamedAndRemoveUntil(AppRoutes.splash, (r) => false);
+                },
               ),
             ],
           ),

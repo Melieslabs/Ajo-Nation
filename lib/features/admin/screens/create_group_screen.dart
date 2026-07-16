@@ -22,6 +22,8 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
   GroupFrequency _frequency = GroupFrequency.monthly;
   int _riskThreshold = 50;
 
+  bool _isSaving = false;
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -30,20 +32,32 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
     super.dispose();
   }
 
-  void _handleSave() {
+  Future<void> _handleSave() async {
+    if (_isSaving) return; // guard against double-tap
     if (!_formKey.currentState!.validate()) return;
 
-    final groupId = MockDataRepository.instance.createGroup(
-      name: _nameController.text.trim(),
-      contributionAmount: num.parse(_contributionController.text),
-      frequency: _frequency,
-      payoutAmount: num.parse(_payoutController.text),
-      riskThresholdPercent: _riskThreshold,
-    );
+    setState(() => _isSaving = true);
 
-    // Return the new group's id so the caller (Groups tab) can navigate
-    // straight to it if it wants to — Navigator.pop with a result.
-    Navigator.of(context).pop(groupId);
+    try {
+      final groupId = await MockDataRepository.instance.createGroup(
+        name: _nameController.text.trim(),
+        contributionAmount: num.parse(_contributionController.text),
+        frequency: _frequency,
+        payoutAmount: num.parse(_payoutController.text),
+        riskThresholdPercent: _riskThreshold,
+      );
+
+      if (!mounted) return;
+      // Return the new group's id so the caller (Groups tab) can navigate
+      // straight to it if it wants to — Navigator.pop with a result.
+      Navigator.of(context).pop(groupId);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isSaving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Couldn\'t create group: $e')),
+      );
+    }
   }
 
   @override
@@ -124,7 +138,10 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                 ),
                 const SizedBox(height: AppTheme.spacing24),
 
-                PrimaryButton(label: 'Save group', onPressed: _handleSave),
+                PrimaryButton(
+                  label: _isSaving ? 'Saving...' : 'Save group',
+                  onPressed: () => _handleSave(),
+                ),
               ],
             ),
           ),
