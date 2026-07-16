@@ -1,10 +1,10 @@
-import 'package:ajo_nation/widgets/my_back_button.dart';
 import 'package:flutter/material.dart';
 
 import '../../../data/mock_data_repository.dart';
 import '../../../models/group.dart';
 import '../../../theme/app_theme.dart';
 import '../../../widgets/member_list_tile.dart';
+import '../../../widgets/my_back_button.dart';
 import '../../../widgets/primary_button.dart';
 import '../../../widgets/status_badge.dart';
 

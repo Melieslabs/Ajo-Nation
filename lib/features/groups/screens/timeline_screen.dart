@@ -1,10 +1,11 @@
-import 'package:ajo_nation/data/mock_data_repository.dart';
-import 'package:ajo_nation/models/timeline_event.dart';
-import 'package:ajo_nation/theme/app_theme.dart';
-import 'package:ajo_nation/theme/theme_controller.dart';
-import 'package:ajo_nation/utils/timeline_tile.dart';
-import 'package:ajo_nation/widgets/daily_summary_card.dart';
 import 'package:flutter/material.dart';
+
+import '../../../data/mock_data_repository.dart';
+import '../../../models/timeline_event.dart';
+import '../../../theme/app_theme.dart';
+import '../../../theme/theme_controller.dart';
+import '../../../utils/timeline_tile.dart';
+import '../../../widgets/daily_summary_card.dart';
 
 /// The per-group activity feed — replaces manually posting payment updates
 /// into WhatsApp. Read-only, entirely derived from MockDataRepository's

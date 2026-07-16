@@ -28,6 +28,27 @@ class MockDataRepository extends ChangeNotifier {
   /// Flip this string to 'member' during dev to test the member-side flow.
   String currentAccountType = 'admin'; // 'admin' | 'member'
 
+  /// Call this from the Logout action, BEFORE navigating back to splash.
+  /// MockDataRepository is a singleton that lives for the whole app session
+  /// — logging out only clearing the navigation stack (pushNamedAndRemoveUntil)
+  /// leaves currentAccountType, currentMemberId, and every created/joined
+  /// group sitting in memory untouched. That's why re-running signup in the
+  /// same session skips straight to whatever role was picked last time —
+  /// nothing ever cleared it. A full hot restart "fixes" it only because
+  /// restart wipes the whole singleton, not because logout actually worked.
+  void resetForLogout() {
+    currentAccountType = 'admin'; // back to a defined default, not leftover state
+    currentMemberId = 'm2';
+    currentAdminId = 'admin1';
+    // Deliberately NOT clearing _groups/_members/_timeline here — those are
+    // your seeded demo data plus anything created this session. If you want
+    // a true "wipe everything, start over" logout, call _seed() again after
+    // clearing the maps. Left as data-preserving for now since you're still
+    // actively testing group creation/join flows and probably don't want
+    // to lose them every time you test the login loop.
+    notifyListeners();
+  }
+
   final Map<String, Member> _members = {};
   final Map<String, Group> _groups = {};
   final List<TimelineEvent> _timeline = [];
@@ -188,8 +209,6 @@ class MockDataRepository extends ChangeNotifier {
     );
     _groups[group.id] = group;
 
-    // Seed a couple of timeline events so the Timeline screen has
-    // something to render out of the box.
     _timeline.addAll([
       TimelineEvent(
         groupId: 'g1',

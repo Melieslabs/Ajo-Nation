@@ -9,9 +9,6 @@ import '../../../theme/theme_controller.dart';
 import '../../../widgets/animated_entry.dart';
 import '../../../widgets/app_bottom_nav.dart';
 
-/// Home shell for account_type = 'admin' only. This screen is reached
-/// exclusively via the post-auth router check — there is no in-app path
-/// that leads a member account here, and no toggle back to it.
 class AdminHomeScreen extends StatefulWidget {
   const AdminHomeScreen({super.key});
 
@@ -353,7 +350,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                         borderRadius: BorderRadius.circular(AppTheme.radius20),
                       ),
                       child: const Center(
-                        child: Text('AM', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18)),
+                        child: Text('JJJ', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18)),
                       ),
                     ),
                     const SizedBox(width: AppTheme.spacing16),
@@ -361,7 +358,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Amina Musa',
+                          Text('James Jonah Jameson',
                               style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700, fontSize: 16)),
                           const SizedBox(height: AppTheme.spacing4),
                           // Fixed label — account_type is permanent, no switch exists.

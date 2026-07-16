@@ -1,4 +1,3 @@
-import 'package:ajo_nation/features/groups/screens/timeline_screen.dart';
 import 'package:flutter/material.dart';
 
 import '../data/mock_data_repository.dart';
@@ -9,6 +8,7 @@ import '../features/admin/screens/payout_confirmation_screen.dart';
 import '../features/auth/screens/kyc_setup_screen.dart';
 import '../features/auth/screens/onboarding_screen.dart';
 import '../features/auth/screens/otp_verification_screen.dart';
+import '../features/auth/screens/role_selection_screen.dart';
 import '../features/auth/screens/sign_in_screen.dart';
 import '../features/auth/screens/sign_up_screen.dart';
 import '../features/auth/screens/splash_screen.dart';
@@ -16,6 +16,7 @@ import '../features/groups/screens/group_detail_screen.dart';
 import '../features/groups/screens/join_group_screen.dart';
 import '../features/groups/screens/my_contributions_screen.dart';
 import '../features/groups/screens/payment_info_screen.dart';
+import '../features/groups/screens/timeline_screen.dart';
 import '../features/home/screens/admin_home_screen.dart';
 import '../features/home/screens/member_home_screen.dart';
 import '../features/notifications/screens/notifications_screen.dart';
@@ -28,6 +29,7 @@ class AppRoutes {
   static const signUp = '/sign-up';
   static const signIn = '/sign-in';
   static const otp = '/otp';
+  static const roleSelection = '/role-selection';
   static const kyc = '/kyc';
   static const home = '/home';
   static const groupDetail = '/group-detail';
@@ -57,16 +59,12 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const SignInScreen());
       case AppRoutes.otp:
         return MaterialPageRoute(builder: (_) => const OtpVerificationScreen());
+      case AppRoutes.roleSelection:
+        return MaterialPageRoute(builder: (_) => const RoleSelectionScreen());
       case AppRoutes.kyc:
         return MaterialPageRoute(builder: (_) => const KycSetupScreen());
 
       case AppRoutes.home:
-        // TEMPORARY branch: reads MockDataRepository.currentAccountType,
-        // which is itself a temporary stand-in (see repo comments). Once
-        // real auth exists, replace this whole case body with a check
-        // against the actual signed-in user's account_type — the branching
-        // logic itself (admin -> AdminHomeScreen, else -> MemberHomeScreen)
-        // stays the same, only the source of truth changes.
         final isAdmin = MockDataRepository.instance.currentAccountType == 'admin';
         return MaterialPageRoute(
           builder: (_) => isAdmin ? const AdminHomeScreen() : const MemberHomeScreen(),

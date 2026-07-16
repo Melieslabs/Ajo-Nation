@@ -78,7 +78,7 @@ class _KycSetupScreenState extends State<KycSetupScreen> {
 
   void _submit() {
     if (_formKey.currentState!.validate()) {
-      Navigator.of(context).pushReplacementNamed(AppRoutes.home);
+      Navigator.of(context).pushReplacementNamed(AppRoutes.roleSelection);
     }
   }
 }
