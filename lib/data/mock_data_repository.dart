@@ -28,6 +28,36 @@ class MockDataRepository extends ChangeNotifier {
   /// Flip this string to 'member' during dev to test the member-side flow.
   String currentAccountType = 'admin'; // 'admin' | 'member'
 
+  /// The signed-in user's real name, populated by syncCurrentUser().
+  /// Profile screens should read this instead of a hardcoded name.
+  String currentUserName = 'User';
+
+  /// Bridges the real signed-in Supabase user id (and now name) into this
+  /// mock repo's stand-in fields. Call this right after signup (Role
+  /// Selection) or right after sign-in fetches the profile — now that
+  /// auth is real, filtering and display should key off the actual
+  /// signed-in user, not the hardcoded seed ids/name.
+  ///
+  /// NOTE: after this runs, the seeded demo group ("Ajo Circle") won't
+  /// appear anymore for the real user — it's tied to the old fake ids
+  /// ('admin1'/'m1'/'m2'/'m3'). Expected: any group created or joined
+  /// from here on correctly uses the real id, since createGroup()/
+  /// joinGroup() already reference currentAdminId/currentMemberId.
+  void syncCurrentUser({
+    required String userId,
+    required String accountType,
+    required String fullName,
+  }) {
+    currentAccountType = accountType;
+    currentUserName = fullName;
+    if (accountType == 'admin') {
+      currentAdminId = userId;
+    } else {
+      currentMemberId = userId;
+    }
+    notifyListeners();
+  }
+
   /// Call this from the Logout action, BEFORE navigating back to splash.
   /// MockDataRepository is a singleton that lives for the whole app session
   /// — logging out only clearing the navigation stack (pushNamedAndRemoveUntil)
@@ -209,6 +239,8 @@ class MockDataRepository extends ChangeNotifier {
     );
     _groups[group.id] = group;
 
+    // Seed a couple of timeline events so the Timeline screen has
+    // something to render out of the box.
     _timeline.addAll([
       TimelineEvent(
         groupId: 'g1',

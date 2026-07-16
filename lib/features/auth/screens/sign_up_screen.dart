@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../routes/app_router.dart';
+import '../../../services/auth_service.dart';
 import '../../../theme/app_theme.dart';
 import '../../../widgets/primary_button.dart';
 
@@ -14,12 +15,19 @@ class SignUpScreen extends StatefulWidget {
 class _SignUpScreenState extends State<SignUpScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  final _phoneController = TextEditingController();
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  String? _nameError;
-  String? _phoneError;
-  String? _passwordError;
+  bool _isSubmitting = false;
+  String? _submitError;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,12 +63,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
                 const SizedBox(height: AppTheme.spacing16),
                 TextFormField(
-                  controller: _phoneController,
-                  keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(labelText: 'Phone number'),
+                  controller: _emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: const InputDecoration(labelText: 'Email'),
                   validator: (value) {
-                    if (value == null || value.trim().length < 10) {
-                      return 'Phone number should be at least 10 digits';
+                    if (value == null || !value.contains('@')) {
+                      return 'Enter a valid email';
                     }
                     return null;
                   },
@@ -78,9 +86,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   },
                 ),
                 const SizedBox(height: AppTheme.spacing24),
-                if (_nameError != null ||
-                    _phoneError != null ||
-                    _passwordError != null)
+                if (_submitError != null)
                   Container(
                     padding: const EdgeInsets.all(AppTheme.spacing12),
                     decoration: BoxDecoration(
@@ -88,16 +94,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       borderRadius: BorderRadius.circular(AppTheme.radius12),
                     ),
                     child: Text(
-                      [
-                        _nameError,
-                        _phoneError,
-                        _passwordError,
-                      ].whereType<String>().join('\n'),
+                      _submitError!,
                       style: TextStyle(color: AppTheme.primary),
                     ),
                   ),
                 const SizedBox(height: AppTheme.spacing24),
-                PrimaryButton(label: 'Continue', onPressed: _submit),
+                PrimaryButton(
+                  label: _isSubmitting ? 'Creating account...' : 'Continue',
+                  onPressed: () => _submit(),
+                ),
                 const SizedBox(height: AppTheme.spacing12),
                 TextButton(
                   onPressed: () =>
@@ -112,15 +117,33 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
   }
 
-  void _submit() {
-    setState(() {
-      _nameError = null;
-      _phoneError = null;
-      _passwordError = null;
-    });
+  Future<void> _submit() async {
+    if (_isSubmitting) return; // guard against double-tap, since onPressed can't be null'd out
 
-    if (_formKey.currentState!.validate()) {
-      Navigator.of(context).pushNamed(AppRoutes.otp);
+    setState(() => _submitError = null);
+
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      AuthService.instance.pendingFullName = _nameController.text.trim();
+      await AuthService.instance.signUp(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+
+      if (!mounted) return;
+      // OTP screen is skipped entirely — email+password with "Confirm
+      // email" off gives a live session immediately, so we go straight
+      // to KYC.
+      Navigator.of(context).pushNamed(AppRoutes.kyc);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isSubmitting = false;
+        _submitError = friendlyAuthError(e);
+      });
     }
   }
 }

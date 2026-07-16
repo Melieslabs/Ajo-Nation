@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../../../routes/app_router.dart';
 import '../../../theme/app_theme.dart';
@@ -21,9 +22,9 @@ class SplashScreen extends StatelessWidget {
                 color: AppTheme.accent,
                 borderRadius: BorderRadius.circular(AppTheme.radius16),
               ),
-              child: Icon(
-                Icons.savings_outlined,
-                size: 64,
+              child: FaIcon(
+                FontAwesomeIcons.piggyBank,
+                size: 56,
                 color: AppTheme.primary,
               ),
             ),
@@ -35,7 +36,7 @@ class SplashScreen extends StatelessWidget {
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium,
             ),
-            const SizedBox(height: AppTheme.spacing32),
+            const SizedBox(height: 300),
             PrimaryButton(
               label: 'Get started',
               onPressed: () =>
@@ -44,8 +45,8 @@ class SplashScreen extends StatelessWidget {
             const SizedBox(height: AppTheme.spacing12),
             TextButton(
               onPressed: () =>
-                  Navigator.of(context).pushReplacementNamed(AppRoutes.home),
-              child: const Text('Skip to demo'),
+                  Navigator.of(context).pushNamed(AppRoutes.signIn),
+              child: const Text('Already have an account? Sign in'),
             ),
           ],
         ),

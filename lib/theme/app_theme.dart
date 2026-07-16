@@ -2,17 +2,6 @@ import 'package:flutter/material.dart';
 import 'theme_controller.dart';
 
 class AppTheme {
-  // ---------------------------------------------------------------------
-  // Theme-aware color getters. These read ThemeController.instance.isDark
-  // on every access, so any widget referencing AppTheme.surface (etc.)
-  // will automatically reflect the current mode as long as that widget
-  // gets rebuilt when the mode changes (see ListenableBuilder usage in
-  // home_screen.dart and main.dart).
-  //
-  // NOTE: because these are getters (not const), they can't be used in
-  // `const` widget constructors. If any screen does `const BoxDecoration(
-  // color: AppTheme.primary)`, remove the `const` there.
-  // ---------------------------------------------------------------------
 
   static bool get _dark => ThemeController.instance.isDark;
 

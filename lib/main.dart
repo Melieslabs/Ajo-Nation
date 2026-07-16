@@ -1,11 +1,19 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'routes/app_router.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_controller.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Supabase.initialize(
+    url: 'https://yptguuxqvtcjtwogpzso.supabase.co',
+    publishableKey: 'sb_publishable_jGmUvs5K9a4bpMtHwKAJ8Q_DyZjQnTo',
+  );
+
   runApp(const MyApp());
 }
 

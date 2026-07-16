@@ -58,14 +58,6 @@ class _KycSetupScreenState extends State<KycSetupScreen> {
                       ? 'Enter a valid account number'
                       : null,
                 ),
-                const SizedBox(height: AppTheme.spacing16),
-                TextFormField(
-                  decoration: const InputDecoration(labelText: 'BVN'),
-                  keyboardType: TextInputType.number,
-                  validator: (value) => (value == null || value.length < 11)
-                      ? 'Enter your 11-digit BVN'
-                      : null,
-                ),
                 const SizedBox(height: AppTheme.spacing24),
                 PrimaryButton(label: 'Finish setup', onPressed: _submit),
               ],

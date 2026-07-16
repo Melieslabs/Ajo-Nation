@@ -9,6 +9,9 @@ import '../../../theme/theme_controller.dart';
 import '../../../widgets/animated_entry.dart';
 import '../../../widgets/app_bottom_nav.dart';
 
+/// Home shell for account_type = 'admin' only. This screen is reached
+/// exclusively via the post-auth router check — there is no in-app path
+/// that leads a member account here, and no toggle back to it.
 class AdminHomeScreen extends StatefulWidget {
   const AdminHomeScreen({super.key});
 
@@ -349,8 +352,9 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                         color: AppTheme.primary,
                         borderRadius: BorderRadius.circular(AppTheme.radius20),
                       ),
-                      child: const Center(
-                        child: Text('JJJ', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18)),
+                      child: Center(
+                        child: Text(_initialsFor(MockDataRepository.instance.currentUserName),
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18)),
                       ),
                     ),
                     const SizedBox(width: AppTheme.spacing16),
@@ -358,7 +362,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('James Jonah Jameson',
+                          Text(MockDataRepository.instance.currentUserName,
                               style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700, fontSize: 16)),
                           const SizedBox(height: AppTheme.spacing4),
                           // Fixed label — account_type is permanent, no switch exists.
@@ -392,6 +396,15 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
   }
 
   // ---- shared local helpers ----
+
+  /// First letter of first + last word of a name, e.g. "Dayo Bassey" -> "DB".
+  /// Falls back to a single letter for one-word names, "?" for empty.
+  String _initialsFor(String name) {
+    final parts = name.trim().split(RegExp(r'\s+'));
+    if (parts.isEmpty || parts.first.isEmpty) return '?';
+    if (parts.length == 1) return parts.first[0].toUpperCase();
+    return (parts.first[0] + parts.last[0]).toUpperCase();
+  }
 
   Widget _statBox({
     required FaIconData icon,

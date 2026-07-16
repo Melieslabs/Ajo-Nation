@@ -9,6 +9,9 @@ import '../../../theme/theme_controller.dart';
 import '../../../widgets/animated_entry.dart';
 import '../../../widgets/app_bottom_nav.dart';
 
+/// Home shell for account_type = 'member' only. Reached exclusively via the
+/// post-auth router check — no in-app path leads an admin account here, and
+/// no toggle exists to switch into it.
 class MemberHomeScreen extends StatefulWidget {
   const MemberHomeScreen({super.key});
 
@@ -388,8 +391,9 @@ class _MemberHomeScreenState extends State<MemberHomeScreen> {
                     Container(
                       width: 56, height: 56,
                       decoration: BoxDecoration(color: AppTheme.primary, borderRadius: BorderRadius.circular(AppTheme.radius20)),
-                      child: const Center(
-                        child: Text('EE', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18)),
+                      child: Center(
+                        child: Text(_initialsFor(MockDataRepository.instance.currentUserName),
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18)),
                       ),
                     ),
                     const SizedBox(width: AppTheme.spacing16),
@@ -397,10 +401,9 @@ class _MemberHomeScreenState extends State<MemberHomeScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Emmanuel Emelie',
+                          Text(MockDataRepository.instance.currentUserName,
                               style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700, fontSize: 16)),
                           const SizedBox(height: AppTheme.spacing4),
-                          // Fixed label — account_type is permanent, no switch exists.
                           Text('Member account',
                               style: Theme.of(context).textTheme.labelLarge?.copyWith(color: AppTheme.textSecondary, fontSize: 12)),
                         ],
@@ -431,6 +434,15 @@ class _MemberHomeScreenState extends State<MemberHomeScreen> {
   }
 
   // ---- shared local helpers ----
+
+  /// First letter of first + last word of a name, e.g. "Dayo Bassey" -> "DB".
+  /// Falls back to a single letter for one-word names, "?" for empty.
+  String _initialsFor(String name) {
+    final parts = name.trim().split(RegExp(r'\s+'));
+    if (parts.isEmpty || parts.first.isEmpty) return '?';
+    if (parts.length == 1) return parts.first[0].toUpperCase();
+    return (parts.first[0] + parts.last[0]).toUpperCase();
+  }
 
   Widget _statBox({
     required FaIconData icon,
