@@ -2,10 +2,10 @@ enum GroupFrequency { daily, weekly, monthly }
 
 extension GroupFrequencyLabel on GroupFrequency {
   String get label => switch (this) {
-    GroupFrequency.daily => 'daily',
-    GroupFrequency.weekly => 'weekly',
-    GroupFrequency.monthly => 'monthly',
-  };
+        GroupFrequency.daily => 'daily',
+        GroupFrequency.weekly => 'weekly',
+        GroupFrequency.monthly => 'monthly',
+      };
 }
 
 enum ContributionStatus { paid, pending, late }
@@ -19,15 +19,21 @@ class GroupMembership {
     required this.dvaAccountNumber,
     required this.currentCycleStatus,
     this.contributionsPaidThisCycle = 0,
+    required this.payoutPosition,
+    this.hasReceivedPayout = false,
   });
 
   final String memberId;
 
-  /// Dedicated Virtual Account number for this member, in this group only.
   final String dvaAccountNumber;
 
   ContributionStatus currentCycleStatus;
+
   int contributionsPaidThisCycle;
+
+  int payoutPosition;
+
+  bool hasReceivedPayout;
 }
 
 class Group {
@@ -39,7 +45,6 @@ class Group {
     required this.frequency,
     required this.payoutAmount,
     required this.riskThresholdPercent,
-    required this.payoutRotation,
     required this.memberships,
     required this.inviteCode,
     this.currentCycleNumber = 1,
@@ -62,7 +67,13 @@ class Group {
   final int riskThresholdPercent;
 
   /// Ordered member IDs — determines who collects the pot, and when.
-  final List<String> payoutRotation;
+  List<GroupMembership> get orderedMembers {
+    final members = [...memberships];
+    members.sort(
+      (a, b) => a.payoutPosition.compareTo(b.payoutPosition),
+    );
+    return members;
+  }
 
   final List<GroupMembership> memberships;
   final int currentCycleNumber;

@@ -112,8 +112,6 @@ class _JoinGroupScreenState extends State<JoinGroupScreen> {
                     errorText: _codeNotFound ? 'No group found for this code' : null,
                   ),
                   onChanged: (_) {
-                    // Clear a stale preview/error as soon as they start editing
-                    // the code again, rather than leaving old data on screen.
                     if (_previewedGroup != null || _codeNotFound) {
                       setState(() {
                         _previewedGroup = null;

@@ -1,3 +1,4 @@
+import 'package:ajo_nation/routes/app_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -14,8 +15,7 @@ class AdminGroupDetailScreen extends StatefulWidget {
   final String groupId;
 
   @override
-  State<AdminGroupDetailScreen> createState() =>
-      _AdminGroupDetailScreenState();
+  State<AdminGroupDetailScreen> createState() => _AdminGroupDetailScreenState();
 }
 
 class _AdminGroupDetailScreenState extends State<AdminGroupDetailScreen> {
@@ -42,8 +42,7 @@ class _AdminGroupDetailScreenState extends State<AdminGroupDetailScreen> {
 
   void _onRepoChanged() => setState(() {});
 
-  StatusVariant _toStatusVariant(ContributionStatus status) =>
-      switch (status) {
+  StatusVariant _toStatusVariant(ContributionStatus status) => switch (status) {
         ContributionStatus.paid => StatusVariant.paid,
         ContributionStatus.pending => StatusVariant.pending,
         ContributionStatus.late => StatusVariant.late,
@@ -64,7 +63,54 @@ class _AdminGroupDetailScreenState extends State<AdminGroupDetailScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: Text(group.name)),
+      appBar: AppBar(
+        title: Text(group.name),
+        actions: [
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              switch (value) {
+                case 'members':
+                  Navigator.pushNamed(
+                    context,
+                    AppRoutes.manageMembers,
+                    arguments: group.id,
+                  );
+                  break;
+
+                case 'order':
+                  Navigator.pushNamed(
+                    context,
+                    AppRoutes.managePayoutOrder,
+                    arguments: group.id,
+                  );
+                  break;
+
+                case 'timeline':
+                  Navigator.pushNamed(
+                    context,
+                    AppRoutes.groupTimeline,
+                    arguments: group.id,
+                  );
+                  break;
+              }
+            },
+            itemBuilder: (context) => const [
+              PopupMenuItem(
+                value: 'members',
+                child: Text('Manage Members'),
+              ),
+              PopupMenuItem(
+                value: 'order',
+                child: Text('Manage Payout Order'),
+              ),
+              PopupMenuItem(
+                value: 'timeline',
+                child: Text('View Timeline'),
+              ),
+            ],
+          ),
+        ],
+      ),
       body: Padding(
         padding: const EdgeInsets.all(AppTheme.spacing24),
         child: ListView(
@@ -123,10 +169,11 @@ class _AdminGroupDetailScreenState extends State<AdminGroupDetailScreen> {
                   children: [
                     Text(
                       group.inviteCode,
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            letterSpacing: 4,
-                            fontWeight: FontWeight.w800,
-                          ),
+                      style:
+                          Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                letterSpacing: 4,
+                                fontWeight: FontWeight.w800,
+                              ),
                     ),
                     Icon(Icons.copy, color: AppTheme.textSecondary, size: 20),
                   ],
@@ -142,7 +189,10 @@ class _AdminGroupDetailScreenState extends State<AdminGroupDetailScreen> {
             Text(
               'Tap a pending or late member to simulate their payment '
               '(stand-in for the Paystack DVA webhook, not built yet).',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.muted),
+              style: Theme.of(context)
+                  .textTheme
+                  .bodySmall
+                  ?.copyWith(color: AppTheme.muted),
             ),
             const SizedBox(height: AppTheme.spacing12),
             for (final membership in group.memberships)
@@ -150,11 +200,11 @@ class _AdminGroupDetailScreenState extends State<AdminGroupDetailScreen> {
                 name: _repo.member(membership.memberId)?.name ?? 'Unknown',
                 initials: _repo.member(membership.memberId)?.initials ?? '?',
                 status: _toStatusVariant(membership.currentCycleStatus),
-                trailing: membership.currentCycleStatus ==
-                        ContributionStatus.late
-                    ? const StatusBadge(
-                        label: 'Late', variant: StatusVariant.late)
-                    : null,
+                trailing:
+                    membership.currentCycleStatus == ContributionStatus.late
+                        ? const StatusBadge(
+                            label: 'Late', variant: StatusVariant.late)
+                        : null,
                 onTap: membership.currentCycleStatus == ContributionStatus.paid
                     ? null
                     : () => _repo.recordContributionPaid(

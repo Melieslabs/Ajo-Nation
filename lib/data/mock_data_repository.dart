@@ -84,6 +84,27 @@ class MockDataRepository extends ChangeNotifier {
     await loadGroups();
   }
 
+Future<void> updatePayoutOrder(
+  String groupId,
+  List<String> newOrder,
+) async {
+  for (int i = 0; i < newOrder.length; i++) {
+    await _supabase
+        .from('group_members')
+        .update({
+          'payout_position': i + 1,
+        })
+        .match({
+          'group_id': groupId,
+          'user_id': newOrder[i],
+        });
+  }
+
+  await refreshGroup(groupId);
+
+  notifyListeners();
+}
+
   /// Call from the Logout action, BEFORE navigating back to splash.
   /// Unlike the mock-data era, this now clears cached data too — this is
   /// real account data, and leaving it in memory would let a second
@@ -138,7 +159,8 @@ class MockDataRepository extends ChangeNotifier {
 
       final groupIds = groupRows.map((r) => r['id'] as String).toList();
       final cycleByGroup = {
-        for (final r in groupRows) r['id'] as String: r['current_cycle_number'] as int
+        for (final r in groupRows)
+          r['id'] as String: r['current_cycle_number'] as int
       };
 
       // One query for every membership row across all these groups.
@@ -148,13 +170,18 @@ class MockDataRepository extends ChangeNotifier {
           .inFilter('group_id', groupIds)
           .order('payout_position');
 
-      final userIds = memberRows.map((r) => r['user_id'] as String).toSet().toList();
+      final userIds =
+          memberRows.map((r) => r['user_id'] as String).toSet().toList();
       final userRows = userIds.isEmpty
           ? <Map<String, dynamic>>[]
-          : await _supabase.from('users').select('id, full_name').inFilter('id', userIds);
+          : await _supabase
+              .from('users')
+              .select('id, full_name')
+              .inFilter('id', userIds);
       for (final u in userRows) {
-        _members[u['id'] as String] =
-            Member(id: u['id'] as String, name: u['full_name'] as String? ?? 'Unnamed');
+        _members[u['id'] as String] = Member(
+            id: u['id'] as String,
+            name: u['full_name'] as String? ?? 'Unnamed');
       }
 
       // One query for every paid contribution across all these groups —
@@ -164,7 +191,7 @@ class MockDataRepository extends ChangeNotifier {
           .from('contributions')
           .select('group_id, user_id, cycle_number')
           .inFilter('group_id', groupIds)
-          .eq('status', 'paid');
+          .eq('status', 'confirmed');
 
       final newGroups = <String, Group>{};
       for (final row in groupRows) {
@@ -185,14 +212,21 @@ class MockDataRepository extends ChangeNotifier {
         final memberships = thisGroupMembers.map((r) {
           final uid = r['user_id'] as String;
           final paidCount = thisCyclePaidCount[uid] ?? 0;
+
           return GroupMembership(
             memberId: uid,
             dvaAccountNumber: r['dva_account_number'] as String? ?? '',
-            currentCycleStatus:
-                paidCount > 0 ? ContributionStatus.paid : ContributionStatus.pending,
+            payoutPosition: (r['payout_position'] as num).toInt(),
+            currentCycleStatus: paidCount > 0
+                ? ContributionStatus.paid
+                : ContributionStatus.pending,
             contributionsPaidThisCycle: paidCount,
           );
         }).toList();
+
+        memberships.sort(
+          (a, b) => a.payoutPosition.compareTo(b.payoutPosition),
+        );
 
         newGroups[groupId] = Group(
           id: groupId,
@@ -202,7 +236,6 @@ class MockDataRepository extends ChangeNotifier {
           frequency: _frequencyFromString(row['frequency'] as String),
           payoutAmount: row['payout_amount'] as num,
           riskThresholdPercent: row['risk_threshold_percent'] as int,
-          payoutRotation: thisGroupMembers.map((r) => r['user_id'] as String).toList(),
           memberships: memberships,
           inviteCode: row['invite_code'] as String? ?? '',
           currentCycleNumber: currentCycle,
@@ -234,13 +267,18 @@ class MockDataRepository extends ChangeNotifier {
           .eq('group_id', groupId)
           .order('payout_position');
 
-      final userIds = memberRows.map((r) => r['user_id'] as String).toSet().toList();
+      final userIds =
+          memberRows.map((r) => r['user_id'] as String).toSet().toList();
       final userRows = userIds.isEmpty
           ? <Map<String, dynamic>>[]
-          : await _supabase.from('users').select('id, full_name').inFilter('id', userIds);
+          : await _supabase
+              .from('users')
+              .select('id, full_name')
+              .inFilter('id', userIds);
       for (final u in userRows) {
-        _members[u['id'] as String] =
-            Member(id: u['id'] as String, name: u['full_name'] as String? ?? 'Unnamed');
+        _members[u['id'] as String] = Member(
+            id: u['id'] as String,
+            name: u['full_name'] as String? ?? 'Unnamed');
       }
 
       final contributionRows = await _supabase
@@ -248,7 +286,7 @@ class MockDataRepository extends ChangeNotifier {
           .select('user_id')
           .eq('group_id', groupId)
           .eq('cycle_number', currentCycle)
-          .eq('status', 'paid');
+          .eq('status', 'confirmed');
 
       final paidCount = <String, int>{};
       for (final c in contributionRows) {
@@ -259,9 +297,11 @@ class MockDataRepository extends ChangeNotifier {
       final memberships = memberRows.map((r) {
         final uid = r['user_id'] as String;
         final count = paidCount[uid] ?? 0;
+
         return GroupMembership(
           memberId: uid,
           dvaAccountNumber: r['dva_account_number'] as String? ?? '',
+          payoutPosition: r['payout_position'] as int,
           currentCycleStatus:
               count > 0 ? ContributionStatus.paid : ContributionStatus.pending,
           contributionsPaidThisCycle: count,
@@ -276,7 +316,6 @@ class MockDataRepository extends ChangeNotifier {
         frequency: _frequencyFromString(row['frequency'] as String),
         payoutAmount: row['payout_amount'] as num,
         riskThresholdPercent: row['risk_threshold_percent'] as int,
-        payoutRotation: memberRows.map((r) => r['user_id'] as String).toList(),
         memberships: memberships,
         inviteCode: row['invite_code'] as String? ?? '',
         currentCycleNumber: currentCycle,
@@ -369,7 +408,6 @@ class MockDataRepository extends ChangeNotifier {
       frequency: frequency,
       payoutAmount: payoutAmount,
       riskThresholdPercent: riskThresholdPercent,
-      payoutRotation: [],
       memberships: [],
       inviteCode: inviteCode,
     );
@@ -399,7 +437,6 @@ class MockDataRepository extends ChangeNotifier {
       frequency: _frequencyFromString(row['frequency'] as String),
       payoutAmount: row['payout_amount'] as num,
       riskThresholdPercent: row['risk_threshold_percent'] as int,
-      payoutRotation: const [],
       memberships: const [],
       inviteCode: row['invite_code'] as String,
       currentCycleNumber: row['current_cycle_number'] as int,
@@ -444,7 +481,7 @@ class MockDataRepository extends ChangeNotifier {
 
       await _supabase.from('timeline_events').insert({
         'group_id': groupId,
-        'type': 'memberJoined',
+        'type': 'member_joined',
         'message': '$currentUserName joined the group',
       });
     }
@@ -466,15 +503,15 @@ class MockDataRepository extends ChangeNotifier {
       'user_id': memberId,
       'cycle_number': group.currentCycleNumber,
       'amount': amount,
-      'paystack_reference': 'SIMULATED-${DateTime.now().millisecondsSinceEpoch}',
-      'status': 'paid',
+      'paystack_reference':
+          'SIMULATED-${DateTime.now().millisecondsSinceEpoch}',
+      'status': 'confirmed',
       'paid_at': DateTime.now().toIso8601String(),
     });
-
     final memberName = _members[memberId]?.name ?? 'Unknown';
     await _supabase.from('timeline_events').insert({
       'group_id': groupId,
-      'type': 'paymentReceived',
+      'type': 'payment_received',
       'message': '$memberName paid ₦$amount',
     });
 
@@ -509,4 +546,30 @@ class MockDataRepository extends ChangeNotifier {
         'memberRemoved' => TimelineEventType.memberRemoved,
         _ => throw ArgumentError('Unknown timeline event type: $value'),
       };
+
+  Future<void> payContribution(String groupId) async {
+    final group = _groups[groupId];
+    if (group == null) return;
+
+    // Prevent duplicate payment for this cycle.
+    final existing = await _supabase
+        .from('contributions')
+        .select('id')
+        .eq('group_id', groupId)
+        .eq('user_id', currentMemberId)
+        .eq('cycle_number', group.currentCycleNumber)
+        .maybeSingle();
+
+    if (existing != null) {
+      return;
+    }
+
+    await recordContributionPaid(
+      groupId,
+      currentMemberId,
+      group.contributionAmount,
+    );
+
+    await refreshGroup(groupId);
+  }
 }

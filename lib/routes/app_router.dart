@@ -1,3 +1,4 @@
+import 'package:ajo_nation/features/admin/screens/manage_payout_order_screen.dart';
 import 'package:flutter/material.dart';
 
 import '../data/mock_data_repository.dart';
@@ -40,6 +41,7 @@ class AppRoutes {
   static const adminGroupDetail = '/admin-group-detail';
   static const groupTimeline = '/group-timeline';
   static const manageMembers = '/manage-members';
+  static const managePayoutOrder = '/manage-payout-order';
   static const payoutConfirmation = '/payout-confirmation';
   static const wallet = '/wallet';
   static const notifications = '/notifications';
@@ -65,9 +67,11 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const KycSetupScreen());
 
       case AppRoutes.home:
-        final isAdmin = MockDataRepository.instance.currentAccountType == 'admin';
+        final isAdmin =
+            MockDataRepository.instance.currentAccountType == 'admin';
         return MaterialPageRoute(
-          builder: (_) => isAdmin ? const AdminHomeScreen() : const MemberHomeScreen(),
+          builder: (_) =>
+              isAdmin ? const AdminHomeScreen() : const MemberHomeScreen(),
         );
 
       case AppRoutes.groupDetail:
@@ -78,7 +82,22 @@ class AppRouter {
       case AppRoutes.joinGroup:
         return MaterialPageRoute(builder: (_) => const JoinGroupScreen());
       case AppRoutes.paymentInfo:
-        return MaterialPageRoute(builder: (_) => const PaymentInfoScreen());
+        final groupId = settings.arguments as String;
+
+        return MaterialPageRoute(
+          builder: (_) => PaymentInfoScreen(
+            groupId: groupId,
+          ),
+        );
+
+      case AppRoutes.managePayoutOrder:
+        final groupId = settings.arguments as String;
+
+        return MaterialPageRoute(
+          builder: (_) => ManagePayoutOrderScreen(
+            groupId: groupId,
+          ),
+        );
       case AppRoutes.myContributions:
         return MaterialPageRoute(builder: (_) => const MyContributionsScreen());
       case AppRoutes.createGroup:
