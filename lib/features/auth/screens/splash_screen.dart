@@ -1,15 +1,70 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../data/mock_data_repository.dart';
 import '../../../routes/app_router.dart';
+import '../../../services/auth_service.dart';
 import '../../../theme/app_theme.dart';
 import '../../../widgets/primary_button.dart';
 
-class SplashScreen extends StatelessWidget {
+class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
   @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> {
+  // Null while still checking for an existing session. Once resolved,
+  // either this screen never actually gets shown (we navigate away) or
+  // it's shown with _checkingSession = false, buttons visible.
+  bool _checkingSession = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkExistingSession();
+  }
+
+  Future<void> _checkExistingSession() async {
+    // Supabase persists sessions locally by default — Supabase.initialize()
+    // in main() already restored it by the time this runs, so this is a
+    // synchronous check, not a network call.
+    if (!AuthService.instance.isSignedIn) {
+      if (mounted) setState(() => _checkingSession = false);
+      return;
+    }
+
+    try {
+      final profile = await AuthService.instance.fetchUserProfile();
+      await MockDataRepository.instance.syncCurrentUser(
+        userId: AuthService.instance.currentUserId!,
+        accountType: profile.accountType,
+        fullName: profile.fullName,
+      );
+      if (!mounted) return;
+      Navigator.of(context).pushReplacementNamed(AppRoutes.home);
+    } on PostgrestException {
+      // Signed in with Supabase Auth, but no `users` row yet — they got
+      // this far in sign-up (auth account created) but never finished
+      // Role Selection. Send them back to finish it instead of dumping
+      // them on the sign-in buttons for an account that already exists.
+      if (!mounted) return;
+      Navigator.of(context).pushReplacementNamed(AppRoutes.roleSelection);
+    } catch (_) {
+      // Anything else (no network, etc.) — fall back to the normal
+      // splash buttons rather than blocking app launch entirely.
+      if (mounted) setState(() => _checkingSession = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (_checkingSession) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
     return Scaffold(
       body: Padding(
         padding: const EdgeInsets.all(AppTheme.spacing24),

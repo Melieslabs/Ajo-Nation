@@ -41,6 +41,7 @@ class Group {
     required this.riskThresholdPercent,
     required this.payoutRotation,
     required this.memberships,
+    required this.inviteCode,
     this.currentCycleNumber = 1,
   });
 
@@ -50,6 +51,11 @@ class Group {
   final num contributionAmount;
   final GroupFrequency frequency;
   final num payoutAmount;
+
+  /// Short, human-shareable code (distinct from `id`) — what the admin
+  /// actually shares with people to join. Looked up via invite_code
+  /// column, not the group's UUID.
+  final String inviteCode;
 
   /// % of the cycle a member must have paid before they're payout-eligible.
   /// One of 25 / 50 / 75 / 100 (100 = must wait until end of cycle).

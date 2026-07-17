@@ -105,8 +105,10 @@ class _JoinGroupScreenState extends State<JoinGroupScreen> {
             
                 TextField(
                   controller: _controller,
+                  textCapitalization: TextCapitalization.characters,
                   decoration: InputDecoration(
                     labelText: 'Invite code',
+                    hintText: 'e.g. 8K3XQ2',
                     errorText: _codeNotFound ? 'No group found for this code' : null,
                   ),
                   onChanged: (_) {

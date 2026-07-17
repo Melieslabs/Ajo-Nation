@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../data/mock_data_repository.dart';
 import '../../../models/group.dart';
@@ -92,6 +93,44 @@ class _AdminGroupDetailScreenState extends State<AdminGroupDetailScreen> {
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ],
+              ),
+            ),
+            const SizedBox(height: AppTheme.spacing24),
+            Text(
+              'Invite code',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: AppTheme.spacing12),
+            InkWell(
+              borderRadius: BorderRadius.circular(AppTheme.radius16),
+              onTap: () async {
+                await Clipboard.setData(ClipboardData(text: group.inviteCode));
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Invite code copied')),
+                );
+              },
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(AppTheme.spacing16),
+                decoration: BoxDecoration(
+                  color: AppTheme.surface,
+                  borderRadius: BorderRadius.circular(AppTheme.radius16),
+                  boxShadow: AppTheme.cardShadow,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      group.inviteCode,
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                            letterSpacing: 4,
+                            fontWeight: FontWeight.w800,
+                          ),
+                    ),
+                    Icon(Icons.copy, color: AppTheme.textSecondary, size: 20),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: AppTheme.spacing24),

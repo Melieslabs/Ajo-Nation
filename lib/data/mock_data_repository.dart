@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -202,6 +204,7 @@ class MockDataRepository extends ChangeNotifier {
           riskThresholdPercent: row['risk_threshold_percent'] as int,
           payoutRotation: thisGroupMembers.map((r) => r['user_id'] as String).toList(),
           memberships: memberships,
+          inviteCode: row['invite_code'] as String? ?? '',
           currentCycleNumber: currentCycle,
         );
       }
@@ -275,6 +278,7 @@ class MockDataRepository extends ChangeNotifier {
         riskThresholdPercent: row['risk_threshold_percent'] as int,
         payoutRotation: memberRows.map((r) => r['user_id'] as String).toList(),
         memberships: memberships,
+        inviteCode: row['invite_code'] as String? ?? '',
         currentCycleNumber: currentCycle,
       );
 
@@ -312,7 +316,10 @@ class MockDataRepository extends ChangeNotifier {
   // ---- Supabase-backed writes ----
 
   /// Creates a new group owned by currentAdminId, with no members yet.
-  /// Returns the new group's id.
+  /// Returns the new group's id. Generates a short invite_code — retries
+  /// a few times on the rare chance of a collision with the unique
+  /// constraint (6 alphanumeric chars ≈ 2 billion combinations, so this
+  /// should essentially never loop more than once in practice).
   Future<String> createGroup({
     required String name,
     required num contributionAmount,
@@ -320,22 +327,38 @@ class MockDataRepository extends ChangeNotifier {
     required num payoutAmount,
     required int riskThresholdPercent,
   }) async {
-    final row = await _supabase
-        .from('groups')
-        .insert({
-          'admin_id': currentAdminId,
-          'name': name,
-          'contribution_amount': contributionAmount,
-          'frequency': frequency.label,
-          'payout_amount': payoutAmount,
-          'risk_threshold_percent': riskThresholdPercent,
-          'current_cycle_number': 1,
-          'status': 'active',
-        })
-        .select('id')
-        .single();
+    const maxAttempts = 5;
+    Map<String, dynamic>? row;
+    String inviteCode = '';
 
-    final id = row['id'] as String;
+    for (var attempt = 0; attempt < maxAttempts; attempt++) {
+      inviteCode = _generateInviteCode();
+      try {
+        row = await _supabase
+            .from('groups')
+            .insert({
+              'admin_id': currentAdminId,
+              'name': name,
+              'contribution_amount': contributionAmount,
+              'frequency': frequency.label,
+              'payout_amount': payoutAmount,
+              'risk_threshold_percent': riskThresholdPercent,
+              'current_cycle_number': 1,
+              'status': 'active',
+              'invite_code': inviteCode,
+            })
+            .select('id')
+            .single();
+        break; // insert succeeded
+      } on PostgrestException catch (e) {
+        // 23505 = unique_violation. Only retry on an actual collision —
+        // anything else (bad column, RLS denial, etc.) should surface.
+        if (e.code == '23505' && attempt < maxAttempts - 1) continue;
+        rethrow;
+      }
+    }
+
+    final id = row!['id'] as String;
 
     // No members yet — build locally rather than round-tripping.
     _groups[id] = Group(
@@ -348,19 +371,20 @@ class MockDataRepository extends ChangeNotifier {
       riskThresholdPercent: riskThresholdPercent,
       payoutRotation: [],
       memberships: [],
+      inviteCode: inviteCode,
     );
     notifyListeners();
     return id;
   }
 
-  /// Looks up a group by invite code (currently just the group's id — see
-  /// class docs on Group re: no separate invite_code column yet) without
-  /// joining, for JoinGroupScreen's preview step.
+  /// Looks up a group by its short invite_code (not the UUID id) without
+  /// joining, for JoinGroupScreen's preview step. Case-insensitive — codes
+  /// are stored uppercase, but people paste/type them inconsistently.
   Future<Group?> previewGroupByInviteCode(String inviteCode) async {
     final row = await _supabase
         .from('groups')
         .select()
-        .eq('id', inviteCode)
+        .eq('invite_code', inviteCode.trim().toUpperCase())
         .maybeSingle();
     if (row == null) return null;
 
@@ -377,6 +401,7 @@ class MockDataRepository extends ChangeNotifier {
       riskThresholdPercent: row['risk_threshold_percent'] as int,
       payoutRotation: const [],
       memberships: const [],
+      inviteCode: row['invite_code'] as String,
       currentCycleNumber: row['current_cycle_number'] as int,
     );
   }
@@ -385,10 +410,21 @@ class MockDataRepository extends ChangeNotifier {
   /// joined Group, or null if the code doesn't match any group. Safe to
   /// call twice — if already a member, just returns the group as-is.
   Future<Group?> joinGroup(String inviteCode) async {
+    // Resolve the short code to the real group id first — every downstream
+    // table (group_members, timeline_events, this repo's cache) is keyed
+    // by id, never by invite_code.
+    final groupRow = await _supabase
+        .from('groups')
+        .select('id')
+        .eq('invite_code', inviteCode.trim().toUpperCase())
+        .maybeSingle();
+    if (groupRow == null) return null;
+    final groupId = groupRow['id'] as String;
+
     final existing = await _supabase
         .from('group_members')
         .select()
-        .eq('group_id', inviteCode)
+        .eq('group_id', groupId)
         .eq('user_id', currentMemberId)
         .maybeSingle();
 
@@ -396,31 +432,27 @@ class MockDataRepository extends ChangeNotifier {
       final countRow = await _supabase
           .from('group_members')
           .select('user_id')
-          .eq('group_id', inviteCode);
+          .eq('group_id', groupId);
       final nextPosition = countRow.length;
 
       await _supabase.from('group_members').insert({
-        'group_id': inviteCode,
+        'group_id': groupId,
         'user_id': currentMemberId,
         'payout_position': nextPosition,
         'dva_account_number': _generateDvaAccountNumber(),
       });
 
       await _supabase.from('timeline_events').insert({
-        'group_id': inviteCode,
+        'group_id': groupId,
         'type': 'memberJoined',
         'message': '$currentUserName joined the group',
       });
     }
 
-    await refreshGroup(inviteCode);
-    return _groups[inviteCode];
+    await refreshGroup(groupId);
+    return _groups[groupId];
   }
 
-  /// Simulates a Paystack DVA webhook — the real webhook isn't built yet,
-  /// so this is a manual "simulate payment" action in the admin UI. Inserts
-  /// a real contribution row with a placeholder reference so the flow is
-  /// testable end-to-end before Paystack is wired up.
   Future<void> recordContributionPaid(
     String groupId,
     String memberId,
@@ -452,6 +484,14 @@ class MockDataRepository extends ChangeNotifier {
   String _generateDvaAccountNumber() {
     final seed = DateTime.now().millisecondsSinceEpoch % 1000000000;
     return '90${seed.toString().padLeft(8, '0')}';
+  }
+
+  /// 6-char code, uppercase letters + digits, excluding visually ambiguous
+  /// characters (0/O, 1/I/L) since this gets typed by hand.
+  String _generateInviteCode() {
+    const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+    final rand = Random.secure();
+    return List.generate(6, (_) => chars[rand.nextInt(chars.length)]).join();
   }
 
   GroupFrequency _frequencyFromString(String value) => switch (value) {
