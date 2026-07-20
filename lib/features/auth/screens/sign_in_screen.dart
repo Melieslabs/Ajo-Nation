@@ -104,7 +104,7 @@ class _SignInScreenState extends State<SignInScreen> {
   Future<void> _submit() async {
     if (_isSubmitting) return; // guard against double-tap, since onPressed can't be null'd out
 
-  setState(() => _submitError = null);
+    setState(() => _submitError = null);
 
     if (!_formKey.currentState!.validate()) return;
 
@@ -115,6 +115,11 @@ class _SignInScreenState extends State<SignInScreen> {
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
+
+      // Existing accounts already have account_type + name set from
+      // their original sign-up — fetch both so AppRouter's /home check
+      // sends them to the correct dashboard, AND Profile shows their
+      // real name instead of a placeholder.
       final profile = await AuthService.instance.fetchUserProfile();
       await MockDataRepository.instance.syncCurrentUser(
         userId: AuthService.instance.currentUserId!,

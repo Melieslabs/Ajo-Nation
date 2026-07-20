@@ -1,8 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
 import 'routes/app_router.dart';
-import 'features/auth/screens/splash_screen.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_controller.dart';
 
@@ -45,7 +45,7 @@ class MyApp extends StatelessWidget {
                 },
               ),
             ),
-            home: const SplashScreen(),
+            initialRoute: AppRoutes.splash,
             onGenerateRoute: AppRouter.onGenerateRoute,
           );
         });

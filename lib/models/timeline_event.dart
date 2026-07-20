@@ -1,4 +1,4 @@
-enum TimelineEventType { paymentReceived, paymentMissed, payoutCompleted, memberJoined, memberRemoved }
+enum TimelineEventType { paymentReceived, paymentMissed, payoutCompleted, cycleStarted, memberJoined, memberRemoved }
 
 /// One entry in a group's permanent activity/audit log.
 class TimelineEvent {

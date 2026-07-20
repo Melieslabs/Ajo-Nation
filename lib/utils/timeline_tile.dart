@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-
 import '../models/timeline_event.dart';
 import '../theme/app_theme.dart';
 
-/// Renders a single TimelineEvent as a row: icon (color-coded by event type)
-/// + message + relative time. Used inside TimelineScreen's day-grouped list.
 class TimelineTile extends StatelessWidget {
   const TimelineTile({super.key, required this.event});
 
@@ -96,6 +93,9 @@ class TimelineTile extends StatelessWidget {
           iconColor: AppTheme.textSecondary,
           bgColor: AppTheme.background,
         );
+      case TimelineEventType.cycleStarted:
+        // TODO: Handle this case.
+        throw UnimplementedError();
     }
   }
 }

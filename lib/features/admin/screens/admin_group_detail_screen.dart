@@ -1,6 +1,7 @@
-import 'package:ajo_nation/routes/app_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
+import '../../../routes/app_router.dart';
 
 import '../../../data/mock_data_repository.dart';
 import '../../../models/group.dart';
@@ -69,6 +70,14 @@ class _AdminGroupDetailScreenState extends State<AdminGroupDetailScreen> {
           PopupMenuButton<String>(
             onSelected: (value) {
               switch (value) {
+                case 'members':
+                  Navigator.pushNamed(
+                    context,
+                    AppRoutes.manageMembers,
+                    arguments: group.id,
+                  );
+                  break;
+
                 case 'order':
                   Navigator.pushNamed(
                     context,
@@ -87,6 +96,10 @@ class _AdminGroupDetailScreenState extends State<AdminGroupDetailScreen> {
               }
             },
             itemBuilder: (context) => const [
+              PopupMenuItem(
+                value: 'members',
+                child: Text('Manage Members'),
+              ),
               PopupMenuItem(
                 value: 'order',
                 child: Text('Manage Payout Order'),
@@ -125,6 +138,52 @@ class _AdminGroupDetailScreenState extends State<AdminGroupDetailScreen> {
                   Text(
                     'Cycle ${group.currentCycleNumber} • ${group.paidCount} of ${group.totalMembers} paid',
                     style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: AppTheme.spacing12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Recipient', style: Theme.of(context).textTheme.labelLarge),
+                            const SizedBox(height: AppTheme.spacing4),
+                            Text(
+                              group.currentRecipient != null
+                                  ? _repo.member(group.currentRecipient!.memberId)?.name ?? 'Unknown'
+                                  : 'Rotation complete',
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Collected', style: Theme.of(context).textTheme.labelLarge),
+                            const SizedBox(height: AppTheme.spacing4),
+                            Text(
+                              '₦${group.collectedThisCycle} / ₦${group.expectedThisCycle}',
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Remaining', style: Theme.of(context).textTheme.labelLarge),
+                            const SizedBox(height: AppTheme.spacing4),
+                            Text(
+                              '${group.totalMembers - group.paidCount} members',
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -216,7 +275,7 @@ class _AdminGroupDetailScreenState extends State<AdminGroupDetailScreen> {
             PrimaryButton(
               label: 'Trigger payout',
               onPressed: () => Navigator.of(context)
-                  .pushNamed('/payout-confirmation', arguments: group.id),
+                  .pushNamed(AppRoutes.payoutConfirmation, arguments: group.id),
             ),
           ],
         ),

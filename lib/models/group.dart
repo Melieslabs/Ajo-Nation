@@ -111,4 +111,14 @@ class Group {
     }
     return null;
   }
+
+  /// The member scheduled to receive this cycle's payout — the
+  /// orderedMembers entry with the lowest payoutPosition among those who
+  /// haven't received a payout yet. Null if every member has already
+  /// received one this cycle (the cycle should roll over before that
+  /// happens in practice) or there are no members yet.
+  GroupMembership? get currentRecipient {
+    final pending = orderedMembers.where((m) => !m.hasReceivedPayout);
+    return pending.isEmpty ? null : pending.first;
+  }
 }

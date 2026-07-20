@@ -128,6 +128,13 @@ class _MemberHomeScreenState extends State<MemberHomeScreen> {
                 ),
               const SizedBox(height: AppTheme.spacing24),
 
+              if (heroGroup != null)
+                AnimatedEntry(
+                  delay: const Duration(milliseconds: 75),
+                  child: _currentRecipientCard(heroGroup, myId),
+                ),
+              if (heroGroup != null) const SizedBox(height: AppTheme.spacing24),
+
               AnimatedEntry(
                 delay: const Duration(milliseconds: 100),
                 child: Row(
@@ -228,6 +235,56 @@ class _MemberHomeScreenState extends State<MemberHomeScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _currentRecipientCard(Group group, String myId) {
+    final recipient = group.currentRecipient;
+    final myMembership = group.membershipFor(myId);
+
+    return Container(
+      padding: const EdgeInsets.all(AppTheme.spacing16),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(AppTheme.radius16),
+        boxShadow: AppTheme.cardShadow,
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Current Recipient',
+                    style: TextStyle(color: AppTheme.textSecondary, fontSize: 12, fontWeight: FontWeight.w500)),
+                const SizedBox(height: AppTheme.spacing8),
+                Text(
+                  recipient != null
+                      ? MockDataRepository.instance.member(recipient.memberId)?.name ?? 'Unknown'
+                      : 'Not yet set',
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: AppTheme.textPrimary),
+                ),
+                if (recipient != null) ...[
+                  const SizedBox(height: AppTheme.spacing4),
+                  Text('Position #${recipient.payoutPosition}',
+                      style: TextStyle(color: AppTheme.muted, fontSize: 12)),
+                ],
+              ],
+            ),
+          ),
+          if (myMembership != null)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text('Your Position',
+                    style: TextStyle(color: AppTheme.textSecondary, fontSize: 12, fontWeight: FontWeight.w500)),
+                const SizedBox(height: AppTheme.spacing8),
+                Text('#${myMembership.payoutPosition}',
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: AppTheme.primary)),
+              ],
+            ),
+        ],
       ),
     );
   }

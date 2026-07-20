@@ -101,6 +101,64 @@ class MockDataRepository extends ChangeNotifier {
     await refreshGroup(groupId);
   }
 
+  /// Pays out the current cycle's recipient (Group.currentRecipient) and
+  /// advances to the next cycle. Returns the recipient's name for the
+  /// confirmation screen. Throws if there's no eligible recipient (every
+  /// member has already received a payout this rotation — starting a new
+  /// rotation isn't built yet).
+  Future<String> triggerPayout(String groupId) async {
+    final group = _groups[groupId];
+    if (group == null) throw StateError('Group not loaded: $groupId');
+
+    final recipient = group.currentRecipient;
+    if (recipient == null) {
+      throw StateError('No eligible recipient — everyone has already been paid out this rotation.');
+    }
+    final recipientName = _members[recipient.memberId]?.name ?? 'Unknown';
+
+    await _supabase.from('group_members').update({
+      'has_received_payout': true,
+    }).match({
+      'group_id': groupId,
+      'user_id': recipient.memberId,
+    });
+
+    await _supabase.from('payout_cycles').insert({
+      'group_id': groupId,
+      'cycle_number': group.currentCycleNumber,
+      'recipient_id': recipient.memberId,
+      'status': 'completed',
+      'disbursed_at': DateTime.now().toIso8601String(),
+    });
+
+    await _supabase.from('timeline_events').insert({
+      'group_id': groupId,
+      'type': 'payoutCompleted',
+      'message': 'Cycle ${group.currentCycleNumber} payout completed. Recipient: $recipientName',
+    });
+
+    final nextCycle = group.currentCycleNumber + 1;
+    await _supabase.from('groups').update({
+      'current_cycle_number': nextCycle,
+    }).eq('id', groupId);
+
+    await refreshGroup(groupId);
+
+    // Log who's up next for the new cycle, if the rotation isn't over.
+    final refreshedGroup = _groups[groupId];
+    final nextRecipient = refreshedGroup?.currentRecipient;
+    if (nextRecipient != null) {
+      final nextName = _members[nextRecipient.memberId]?.name ?? 'Unknown';
+      await _supabase.from('timeline_events').insert({
+        'group_id': groupId,
+        'type': 'cycleStarted',
+        'message': 'Cycle $nextCycle started. $nextName is scheduled to receive this payout.',
+      });
+    }
+
+    return recipientName;
+  }
+
   /// Call from the Logout action, BEFORE navigating back to splash.
   /// Unlike the mock-data era, this now clears cached data too — this is
   /// real account data, and leaving it in memory would let a second
@@ -162,7 +220,7 @@ class MockDataRepository extends ChangeNotifier {
       // One query for every membership row across all these groups.
       final memberRows = await _supabase
           .from('group_members')
-          .select('group_id, user_id, payout_position, dva_account_number')
+          .select('group_id, user_id, payout_position, dva_account_number, has_received_payout')
           .inFilter('group_id', groupIds)
           .order('payout_position');
 
@@ -216,6 +274,7 @@ class MockDataRepository extends ChangeNotifier {
             memberId: uid,
             dvaAccountNumber: r['dva_account_number'] as String? ?? '',
             payoutPosition: (r['payout_position'] as num).toInt(),
+            hasReceivedPayout: r['has_received_payout'] as bool? ?? false,
             currentCycleStatus: paidCount > 0
                 ? ContributionStatus.paid
                 : ContributionStatus.pending,
@@ -262,7 +321,7 @@ class MockDataRepository extends ChangeNotifier {
 
       final memberRows = await _supabase
           .from('group_members')
-          .select('user_id, payout_position, dva_account_number')
+          .select('user_id, payout_position, dva_account_number, has_received_payout')
           .eq('group_id', groupId)
           .order('payout_position');
 
@@ -304,6 +363,7 @@ class MockDataRepository extends ChangeNotifier {
           memberId: uid,
           dvaAccountNumber: r['dva_account_number'] as String? ?? '',
           payoutPosition: r['payout_position'] as int,
+          hasReceivedPayout: r['has_received_payout'] as bool? ?? false,
           currentCycleStatus:
               count > 0 ? ContributionStatus.paid : ContributionStatus.pending,
           contributionsPaidThisCycle: count,
@@ -544,6 +604,7 @@ class MockDataRepository extends ChangeNotifier {
         'paymentReceived' => TimelineEventType.paymentReceived,
         'paymentMissed' => TimelineEventType.paymentMissed,
         'payoutCompleted' => TimelineEventType.payoutCompleted,
+        'cycleStarted' => TimelineEventType.cycleStarted,
         'memberJoined' => TimelineEventType.memberJoined,
         'memberRemoved' => TimelineEventType.memberRemoved,
         _ => throw ArgumentError('Unknown timeline event type: $value'),

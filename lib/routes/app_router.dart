@@ -1,10 +1,10 @@
-import 'package:ajo_nation/features/admin/screens/manage_payout_order_screen.dart';
 import 'package:flutter/material.dart';
 
 import '../data/mock_data_repository.dart';
 import '../features/admin/screens/add_manage_members_screen.dart';
 import '../features/admin/screens/admin_group_detail_screen.dart';
 import '../features/admin/screens/create_group_screen.dart';
+import '../features/admin/screens/manage_payout_order_screen.dart';
 import '../features/admin/screens/payout_confirmation_screen.dart';
 import '../features/auth/screens/kyc_setup_screen.dart';
 import '../features/auth/screens/onboarding_screen.dart';
@@ -117,8 +117,9 @@ class AppRouter {
           builder: (_) => const AddManageMembersScreen(),
         );
       case AppRoutes.payoutConfirmation:
+        final groupId = settings.arguments as String;
         return MaterialPageRoute(
-          builder: (_) => const PayoutConfirmationScreen(),
+          builder: (_) => PayoutConfirmationScreen(groupId: groupId),
         );
       case AppRoutes.wallet:
         return MaterialPageRoute(builder: (_) => const WalletOverviewScreen());

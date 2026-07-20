@@ -39,6 +39,10 @@ class PaymentInfoScreen extends StatelessWidget {
     }
 
     final isPaid = membership.currentCycleStatus == ContributionStatus.paid;
+    final recipient = group.currentRecipient;
+    final recipientName = recipient != null
+        ? repo.member(recipient.memberId)?.name ?? 'Unknown'
+        : null;
 
     return Scaffold(
       appBar: AppBar(
@@ -49,6 +53,46 @@ class PaymentInfoScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (recipientName != null) ...[
+              Text(
+                "This cycle's recipient",
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: AppTheme.spacing12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(AppTheme.spacing16),
+                decoration: BoxDecoration(
+                  color: AppTheme.surface,
+                  borderRadius: BorderRadius.circular(AppTheme.radius16),
+                  boxShadow: AppTheme.cardShadow,
+                ),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      backgroundColor: AppTheme.primarySoft,
+                      child: Icon(Icons.person, color: AppTheme.primary),
+                    ),
+                    const SizedBox(width: AppTheme.spacing12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(recipientName,
+                              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: AppTheme.textPrimary)),
+                          const SizedBox(height: AppTheme.spacing4),
+                          Text(
+                            "Everyone's contributions will be paid to $recipientName after this cycle closes.",
+                            style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppTheme.spacing24),
+            ],
             Text(
               'Current Cycle',
               style: Theme.of(context).textTheme.headlineSmall,
