@@ -46,15 +46,9 @@ class _SplashScreenState extends State<SplashScreen> {
       if (!mounted) return;
       Navigator.of(context).pushReplacementNamed(AppRoutes.home);
     } on PostgrestException {
-      // Signed in with Supabase Auth, but no `users` row yet — they got
-      // this far in sign-up (auth account created) but never finished
-      // Role Selection. Send them back to finish it instead of dumping
-      // them on the sign-in buttons for an account that already exists.
       if (!mounted) return;
       Navigator.of(context).pushReplacementNamed(AppRoutes.roleSelection);
     } catch (_) {
-      // Anything else (no network, etc.) — fall back to the normal
-      // splash buttons rather than blocking app launch entirely.
       if (mounted) setState(() => _checkingSession = false);
     }
   }

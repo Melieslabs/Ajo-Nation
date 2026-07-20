@@ -84,26 +84,22 @@ class MockDataRepository extends ChangeNotifier {
     await loadGroups();
   }
 
-Future<void> updatePayoutOrder(
-  String groupId,
-  List<String> newOrder,
-) async {
-  for (int i = 0; i < newOrder.length; i++) {
-    await _supabase
-        .from('group_members')
-        .update({
+  /// Updates each member's payout_position to match newOrder's index.
+  /// Runs the per-member updates concurrently — sequential awaits here
+  /// would mean one network round trip per member, back to back.
+  Future<void> updatePayoutOrder(String groupId, List<String> newOrder) async {
+    await Future.wait([
+      for (var i = 0; i < newOrder.length; i++)
+        _supabase.from('group_members').update({
           'payout_position': i + 1,
-        })
-        .match({
+        }).match({
           'group_id': groupId,
           'user_id': newOrder[i],
-        });
+        }),
+    ]);
+
+    await refreshGroup(groupId);
   }
-
-  await refreshGroup(groupId);
-
-  notifyListeners();
-}
 
   /// Call from the Logout action, BEFORE navigating back to splash.
   /// Unlike the mock-data era, this now clears cached data too — this is
@@ -175,7 +171,10 @@ Future<void> updatePayoutOrder(
       final userRows = userIds.isEmpty
           ? <Map<String, dynamic>>[]
           : await _supabase
-              .from('users')
+              // not 'users' directly — RLS there only shows your own row.
+              // public_profiles view exposes id+full_name to any authenticated
+              // user without leaking bank details (see public_profiles_view.sql)
+              .from('public_profiles')
               .select('id, full_name')
               .inFilter('id', userIds);
       for (final u in userRows) {
@@ -272,7 +271,10 @@ Future<void> updatePayoutOrder(
       final userRows = userIds.isEmpty
           ? <Map<String, dynamic>>[]
           : await _supabase
-              .from('users')
+              // not 'users' directly — RLS there only shows your own row.
+              // public_profiles view exposes id+full_name to any authenticated
+              // user without leaking bank details (see public_profiles_view.sql)
+              .from('public_profiles')
               .select('id, full_name')
               .inFilter('id', userIds);
       for (final u in userRows) {

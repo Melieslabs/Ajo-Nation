@@ -69,14 +69,6 @@ class _AdminGroupDetailScreenState extends State<AdminGroupDetailScreen> {
           PopupMenuButton<String>(
             onSelected: (value) {
               switch (value) {
-                case 'members':
-                  Navigator.pushNamed(
-                    context,
-                    AppRoutes.manageMembers,
-                    arguments: group.id,
-                  );
-                  break;
-
                 case 'order':
                   Navigator.pushNamed(
                     context,
@@ -95,10 +87,6 @@ class _AdminGroupDetailScreenState extends State<AdminGroupDetailScreen> {
               }
             },
             itemBuilder: (context) => const [
-              PopupMenuItem(
-                value: 'members',
-                child: Text('Manage Members'),
-              ),
               PopupMenuItem(
                 value: 'order',
                 child: Text('Manage Payout Order'),
@@ -195,7 +183,7 @@ class _AdminGroupDetailScreenState extends State<AdminGroupDetailScreen> {
                   ?.copyWith(color: AppTheme.muted),
             ),
             const SizedBox(height: AppTheme.spacing12),
-            for (final membership in group.memberships)
+            for (final membership in group.orderedMembers)
               MemberListTile(
                 name: _repo.member(membership.memberId)?.name ?? 'Unknown',
                 initials: _repo.member(membership.memberId)?.initials ?? '?',
@@ -207,11 +195,22 @@ class _AdminGroupDetailScreenState extends State<AdminGroupDetailScreen> {
                         : null,
                 onTap: membership.currentCycleStatus == ContributionStatus.paid
                     ? null
-                    : () => _repo.recordContributionPaid(
-                          group.id,
-                          membership.memberId,
-                          group.contributionAmount,
-                        ),
+                    : () async {
+                        try {
+                          await _repo.recordContributionPaid(
+                            group.id,
+                            membership.memberId,
+                            group.contributionAmount,
+                          );
+                        } catch (e) {
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Couldn\'t record payment: $e'),
+                            ),
+                          );
+                        }
+                      },
               ),
             const SizedBox(height: AppTheme.spacing24),
             PrimaryButton(

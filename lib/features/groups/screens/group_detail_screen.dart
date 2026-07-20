@@ -160,7 +160,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: AppTheme.spacing12),
-                  for (final membership in group.memberships)
+                  for (final membership in group.orderedMembers)
                     MemberListTile(
                       name: _repo.member(membership.memberId)?.name ?? 'Unknown',
                       initials: _repo.member(membership.memberId)?.initials ?? '?',

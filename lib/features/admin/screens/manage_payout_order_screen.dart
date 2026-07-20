@@ -24,7 +24,16 @@ class _ManagePayoutOrderScreenState extends State<ManagePayoutOrderScreen> {
   late List<String> _order;
 
   bool _saving = false;
+  String? _error;
 
+  @override
+  void initState() {
+    super.initState();
+    final group = _repo.group(widget.groupId);
+    _order = group != null
+        ? group.orderedMembers.map((m) => m.memberId).toList()
+        : [];
+  }
 
   void _onReorder(int oldIndex, int newIndex) {
     setState(() {
@@ -38,23 +47,39 @@ class _ManagePayoutOrderScreenState extends State<ManagePayoutOrderScreen> {
   }
 
   Future<void> _saveOrder() async {
-    setState(() => _saving = true);
+    if (_saving) return; // guard against double-tap
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
 
-    await _repo.updatePayoutOrder(
-      widget.groupId,
-      _order,
-    );
+    try {
+      await _repo.updatePayoutOrder(
+        widget.groupId,
+        _order,
+      );
 
-    if (!mounted) return;
-
-    setState(() => _saving = false);
-
-    Navigator.pop(context);
+      if (!mounted) return;
+      Navigator.pop(context);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _saving = false;
+        _error = 'Couldn\'t save the new order: $e';
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final group = _repo.group(widget.groupId)!;
+    final group = _repo.group(widget.groupId);
+
+    if (group == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Group not found')),
+        body: const Center(child: Text('This group no longer exists.')),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -95,7 +120,7 @@ class _ManagePayoutOrderScreenState extends State<ManagePayoutOrderScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 24),
               buildDefaultDragHandles: false,
               itemCount: _order.length,
-              onReorderItem: _onReorder,
+              onReorder: _onReorder,
               itemBuilder: (context, index) {
                 final member = _repo.member(_order[index]);
 
@@ -138,13 +163,18 @@ class _ManagePayoutOrderScreenState extends State<ManagePayoutOrderScreen> {
               padding: const EdgeInsets.all(
                 AppTheme.spacing24,
               ),
-              child: PrimaryButton(
-                label: _saving ? "Saving..." : "Save Payout Order",
-                onPressed: _saving
-                    ? () {}
-                    : () {
-                        _saveOrder();
-                      },
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (_error != null) ...[
+                    Text(_error!, style: TextStyle(color: AppTheme.danger)),
+                    const SizedBox(height: AppTheme.spacing12),
+                  ],
+                  PrimaryButton(
+                    label: _saving ? "Saving..." : "Save Payout Order",
+                    onPressed: () => _saveOrder(),
+                  ),
+                ],
               ),
             ),
           ),
